@@ -1,0 +1,22 @@
+{
+  "dependencies": {
+    "@slack/bolt": "^4.4.0",
+    "@slack/web-api": "^7.9.3",
+    "dayjs": "^1.11.13",
+    "dotenv": "^17.0.1",
+    "mysql2": "^3.14.2"
+  },
+  "name": "slackapp",
+  "version": "0.0.0",
+  "description": "Aime listener bot",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "start": "node index.js"
+  },
+  "author": "Duc DM",
+  "license": "ISC",
+  "devDependencies": {
+    "@slack/cli-hooks": "^1.2.1"
+  }
+}
