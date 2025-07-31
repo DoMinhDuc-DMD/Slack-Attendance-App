@@ -5,8 +5,8 @@ async function autoUpdateDuration(db, userId, leaveDay) {
     try {
         const updateTime = dayjs().format(DATETIME_FORMAT);
         const [allRequests] = await db.execute(
-            `SELECT * FROM leave_requests WHERE user_id = ? AND leave_day = ? AND request_status = 'enabled'`,
-            [userId, leaveDay]
+            `SELECT * FROM leave_requests WHERE user_id = ? AND leave_day = ? AND request_status = ?`,
+            [userId, leaveDay, 'enabled']
         );
 
         const findByPeriod = (period) => allRequests.find(req => req.leave_period === period);

@@ -1,7 +1,7 @@
 const dayjs = require("dayjs");
 const { YMD_FORMAT, DMY_FORMAT, DATETIME_FORMAT } = require("../services/formatDate");
 const { checkLeaveRequest } = require("../services/checkLeaveRequest");
-const { formatPeriod } = require("../services/formatVaribles");
+const { formatPeriod } = require("../services/formatVariables");
 
 module.exports = (app, db) => {
     // Xử lý yêu cầu nghỉ khi được nhắc đến

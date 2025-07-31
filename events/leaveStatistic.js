@@ -1,8 +1,7 @@
 const dayjs = require("dayjs");
-const { YMD_FORMAT, DM_FORMAT } = require("../services/formatDate");
-const { leaveStatistics } = require("../services/leaveStatistic");
-const { autoUpdateDuration } = require("../services/autoUpdateDuration");
-const { formatPeriod, formatDuration } = require("../services/formatVaribles");
+const { DM_FORMAT } = require("../services/formatDate");
+const { getLeaveStatistics } = require("../services/getLeaveStatistic");
+const { formatPeriod, formatDuration } = require("../services/formatVariables");
 
 module.exports = (app, db) => {
     // Xử lý yêu cầu thống kê nghỉ khi được nhắc đến
@@ -18,23 +17,21 @@ module.exports = (app, db) => {
             if (isNaN(month) || isNaN(year)) return;
 
             if (userId) {
-                autoUpdateDuration(db, userId, dayjs().format(YMD_FORMAT));
-                const stats = await leaveStatistics(db, userId, month, year);
-
+                const stats = await getLeaveStatistics(db, userId, month, year);
                 if (stats.length === 0) {
                     await client.chat.postMessage({
                         channel: event.channel,
                         thread_ts: threadTs,
-                        text: (`Không có yêu cầu nghỉ của <@${userId}> trong tháng ${month}/${year}.`)
+                        text: (`Chưa có yêu cầu nghỉ của <@${userId}> trong tháng ${month}/${year}.`)
                     });
                     return;
                 }
 
-                let totalLeaveDuration = 0;
+                let totalLeaveTime = 0;
                 let totalLeaveDays = 0;
 
                 const details = stats.map(l => {
-                    totalLeaveDuration += l.leave_duration;
+                    totalLeaveTime += l.leave_duration;
                     if (l.leave_period === 'full_day') totalLeaveDays++;
                     return `\t- ${dayjs(l.leave_day).format(DM_FORMAT)}: ${formatPeriod(l.leave_period)} (${formatDuration(l.leave_duration)})`;
                 }).join('\n');
@@ -54,11 +51,12 @@ module.exports = (app, db) => {
                     channel: event.channel,
                     thread_ts: threadTs,
                     text: (`Thống kê nghỉ của <@${userId}> trong tháng ${month}/${year}:\n` +
-                        `\t- Thời gian nghỉ: *${formatDuration(totalLeaveDuration)}*\n` +
+                        `\t- Thời gian nghỉ: *${formatDuration(totalLeaveTime)}*\n` +
                         `\t- Số ngày nghỉ: *${totalLeaveDays} ngày*\n` +
                         `Chi tiết:\n${details}`)
                 });
             } else {
+                // thống kê toàn bộ nhân viên (chưa phát triển)
                 await client.chat.postMessage({
                     channel: event.channel,
                     thread_ts: threadTs,

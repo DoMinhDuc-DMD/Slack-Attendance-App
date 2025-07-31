@@ -43,7 +43,7 @@ async function checkLeaveRequest(db, userId, leaveDay, leavePeriod, leaveDuratio
                     VALUES (?, ?, ?, ?, ?, ?)`,
                     [userId, leaveDay, leavePeriod, leaveDuration, receiveTime, updateTime]
                 );
-
+                await autoUpdateDuration(db, userId, leaveDay);
                 return { type: 'updated' };
             }
         }
@@ -61,7 +61,7 @@ async function checkLeaveRequest(db, userId, leaveDay, leavePeriod, leaveDuratio
                 VALUES (?, ?, ?, ?, ?, ?)`,
                 [userId, leaveDay, leavePeriod, leaveDuration, receiveTime, updateTime]
             );
-
+            await autoUpdateDuration(db, userId, leaveDay);
             return { type: 'updated' };
         }
         // Nếu đã có bản ghi rồi thì chỉ update nếu duration tăng
@@ -72,6 +72,7 @@ async function checkLeaveRequest(db, userId, leaveDay, leavePeriod, leaveDuratio
                     WHERE id = ?`,
                     [leaveDuration, updateTime, existing.id]
                 );
+                await autoUpdateDuration(db, userId, leaveDay);
                 return { type: 'updated' };
             }
             return { type: 'existed' };
@@ -81,7 +82,7 @@ async function checkLeaveRequest(db, userId, leaveDay, leavePeriod, leaveDuratio
             VALUES (?, ?, ?, ?, ?, ?)`,
             [userId, leaveDay, leavePeriod, leaveDuration, receiveTime, updateTime]
         );
-        autoUpdateDuration(db, userId, leaveDay);
+        await autoUpdateDuration(db, userId, leaveDay);
         return { type: 'inserted' };
     } catch (error) {
         console.error("Error checking existing leave request: ", error);
