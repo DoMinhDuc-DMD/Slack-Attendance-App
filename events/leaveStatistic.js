@@ -2,7 +2,8 @@ const dayjs = require("dayjs");
 const { DM_FORMAT } = require("../services/formatDate");
 const { getLeaveStatistics } = require("../services/getLeaveStatistic");
 const { formatPeriod, formatDuration } = require("../services/formatVariables");
-const { addCheckMark } = require("../services/addCheckMark");
+const { addIcon } = require("../services/addIcon");
+const { responseInThread } = require("../services/responseInThread");
 
 module.exports = (app, db) => {
     app.event('app_mention', async ({ event, client }) => {
@@ -24,12 +25,7 @@ module.exports = (app, db) => {
             if (userId) {
                 const stats = await getLeaveStatistics(db, userId, month, year, sortOrder);
                 if (stats.length === 0) {
-                    await client.chat.postMessage({
-                        channel: event.channel,
-                        thread_ts: threadTs,
-                        text: (`Chưa có yêu cầu nghỉ của <@${userId}> trong tháng ${month}/${year}.`)
-                    });
-                    return;
+                    return responseInThread(client, event.channel, threadTs, `Chưa có dữ liệu nghỉ của <@${userId}> tháng ${month}/${year}.`);
                 }
 
                 let totalLeaveTime = 0;
@@ -41,25 +37,17 @@ module.exports = (app, db) => {
                     return `\t- ${dayjs(l.leave_day).format(DM_FORMAT)}: ${formatPeriod(l.leave_period)} (${formatDuration(l.leave_duration)})`;
                 }).join('\n');
 
-                addCheckMark(client, event.channel, threadTs);
-
-                await client.chat.postMessage({
-                    channel: event.channel,
-                    thread_ts: threadTs,
-                    text: (`Thống kê nghỉ của <@${userId}> trong tháng ${month}/${year}:\n` +
-                        `\t- Số ngày nghỉ: *${totalLeaveDays} ngày*\n` +
-                        `\t- Tổng thời gian nghỉ: *${formatDuration(totalLeaveTime)}*\n` +
-                        `Chi tiết:\n${details}`)
-                });
+                addIcon(client, event.channel, threadTs, 'white_check_mark');
+                responseInThread(client, event.channel, threadTs,
+                    `Thống kê nghỉ của <@${userId}> trong tháng ${month}/${year}:\n` +
+                    `\t- Số ngày nghỉ: *${totalLeaveDays} ngày*\n` +
+                    `\t- Tổng thời gian nghỉ: *${formatDuration(totalLeaveTime)}*\n` +
+                    `Chi tiết:\n${details}`
+                );
             } else {
                 const stats = await getLeaveStatistics(db, null, month, year);
                 if (stats.length === 0) {
-                    await client.chat.postMessage({
-                        channel: event.channel,
-                        thread_ts: threadTs,
-                        text: (`Chưa có yêu cầu nghỉ trong tháng ${month}/${year}.`)
-                    });
-                    return;
+                    return responseInThread(client, event.channel, threadTs, `Chưa có dữ liệu nghỉ tháng ${month}/${year}.`);
                 }
                 const details = stats.map(stat => {
                     return `<@${stat.user_id}>:\n` +
@@ -67,13 +55,8 @@ module.exports = (app, db) => {
                         `\t * Tổng thời gian nghỉ: ${formatDuration(stat.total_times)}`;
                 }).join('\n');
 
-                addCheckMark(client, event.channel, threadTs);
-
-                await client.chat.postMessage({
-                    channel: event.channel,
-                    thread_ts: threadTs,
-                    text: details
-                });
+                addIcon(client, event.channel, threadTs, 'white_check_mark');
+                responseInThread(client, event.channel, threadTs, details);
             }
         } catch (error) {
             console.error("Error handling leave statistic request:", error);

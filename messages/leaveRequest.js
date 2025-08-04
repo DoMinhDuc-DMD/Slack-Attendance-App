@@ -2,7 +2,8 @@ const dayjs = require("dayjs");
 const { YMD_FORMAT, DMY_FORMAT, DATETIME_FORMAT } = require("../services/formatDate");
 const { checkLeaveRequest } = require("../services/checkLeaveRequest");
 const { formatPeriod } = require("../services/formatVariables");
-const { addCheckMark } = require("../services/addCheckMark");
+const { addIcon } = require("../services/addIcon");
+const { responseInThread } = require("../services/responseInThread");
 
 module.exports = (app, db) => {
     // Xử lý yêu cầu nghỉ khi được nhắc đến
@@ -46,20 +47,10 @@ module.exports = (app, db) => {
             }
 
             const parsedDuration = parseFloat(durationValue);
-            if (period.includes('sáng') || period === 'đầu ngày') {
-                if (parsedDuration > 3.5)
-                    return await client.chat.postMessage({
-                        channel: message.channel,
-                        thread_ts: threadTs,
-                        text: `Thời gian nghỉ không hợp lệ!`
-                    })
-            } else if (period.includes('chiều') || period === 'cuối ngày') {
-                if (parsedDuration > 4.5)
-                    return await client.chat.postMessage({
-                        channel: message.channel,
-                        thread_ts: threadTs,
-                        text: `Thời gian nghỉ không hợp lệ!`
-                    })
+            if ((period.includes('sáng') || period === 'đầu ngày') && parsedDuration > 3.5) {
+                return responseInThread(client, message.channel, threadTs, `Thời gian nghỉ không hợp lệ!`);
+            } else if ((period.includes('chiều') || period === 'cuối ngày') && parsedDuration > 4.5) {
+                return responseInThread(client, message.channel, threadTs, `Thời gian nghỉ không hợp lệ!`);
             }
 
             durationValue = durationValue.toFixed(2);
@@ -84,21 +75,13 @@ module.exports = (app, db) => {
             const result = await checkLeaveRequest(db, message.user, dayjs().format(YMD_FORMAT), leavePeriod, leaveDuration, receiveTime);
 
             // Thả icon
-            if (result.type === 'inserted' || result.type === 'updated') addCheckMark(client, message.channel, threadTs);
+            if (result.type === 'inserted' || result.type === 'updated') addIcon(client, message.channel, threadTs, 'white_check_mark');
 
             // Trả lời trong thread
             if (result.type === 'existed') {
-                await client.chat.postMessage({
-                    channel: message.channel,
-                    thread_ts: threadTs,
-                    text: `Đã có yêu cầu nghỉ ${formatPeriod(leavePeriod).toLowerCase()} ${dayjs().format(DMY_FORMAT)}.`
-                });
+                responseInThread(client, message.channel, threadTs, `Đã có yêu cầu nghỉ ${formatPeriod(leavePeriod).toLowerCase()} ${dayjs().format(DMY_FORMAT)}.`);
             } else if (result.type === 'updated') {
-                await client.chat.postMessage({
-                    channel: message.channel,
-                    thread_ts: threadTs,
-                    text: `Đã cập nhật thời gian nghỉ ${formatPeriod(leavePeriod).toLowerCase()} ${dayjs().format(DMY_FORMAT)}.`
-                });
+                responseInThread(client, message.channel, threadTs, `Đã cập nhật thời gian nghỉ ${formatPeriod(leavePeriod).toLowerCase()} ${dayjs().format(DMY_FORMAT)}.`);
             }
         } catch (error) {
             console.error("Error handling leave request (mention):", error);

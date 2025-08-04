@@ -1,7 +1,7 @@
-async function addCheckMark(client, channel, threadTs) {
+async function addIcon(client, channel, threadTs, icon) {
     try {
         await client.reactions.add({
-            name: 'white_check_mark',
+            name: icon,
             channel: channel,
             timestamp: threadTs,
         });
@@ -10,4 +10,4 @@ async function addCheckMark(client, channel, threadTs) {
         else console.error("Error adding reaction:", error);
     }
 }
-module.exports = { addCheckMark };
+module.exports = { addIcon };
