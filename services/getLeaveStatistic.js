@@ -7,10 +7,15 @@ async function getLeaveStatistics(db, userId, month, year) {
 
             return userLeaves;
         } else {
-            // lấy toàn bộ nhân viên (chưa phát triển)
-            const [allLeaves] = await db.execute(`SELECT * FROM leave_requests
-                WHERE MONTH(leave_day) = ? AND YEAR(leave_day) = ? AND request_status = ? ORDER BY leave_day`,
-                [month, year, 'enabled']);
+            const [allLeaves] = await db.execute(
+                `SELECT 
+                    user_id, 
+                    SUM(CASE WHEN leave_period = 'full_day' THEN 1 ELSE 0 END) AS total_leaves, 
+                    SUM(leave_duration) AS total_times 
+                FROM leave_requests 
+                WHERE MONTH(leave_day) = ? AND YEAR(leave_day) = ? AND request_status = ? GROUP BY user_id ORDER BY total_times DESC`,
+                [month, year, 'enabled']
+            );
 
             return allLeaves;
         }

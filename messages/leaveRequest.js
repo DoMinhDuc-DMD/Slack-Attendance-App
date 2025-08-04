@@ -2,6 +2,7 @@ const dayjs = require("dayjs");
 const { YMD_FORMAT, DMY_FORMAT, DATETIME_FORMAT } = require("../services/formatDate");
 const { checkLeaveRequest } = require("../services/checkLeaveRequest");
 const { formatPeriod } = require("../services/formatVariables");
+const { addCheckMark } = require("../services/addCheckMark");
 
 module.exports = (app, db) => {
     // Xử lý yêu cầu nghỉ khi được nhắc đến
@@ -63,18 +64,7 @@ module.exports = (app, db) => {
             const result = await checkLeaveRequest(db, message.user, dayjs().format(YMD_FORMAT), leavePeriod, leaveDuration, receiveTime);
 
             // Thả icon
-            if (result.type === 'inserted' || result.type === 'updated') {
-                try {
-                    await client.reactions.add({
-                        name: 'white_check_mark',
-                        channel: message.channel,
-                        timestamp: threadTs,
-                    });
-                } catch (error) {
-                    if (error.data && error.data.error === 'already_reacted') return;
-                    else console.error("Error adding reaction:", error);
-                }
-            }
+            if (result.type === 'inserted' || result.type === 'updated') addCheckMark(client, message.channel, threadTs);
 
             // Trả lời trong thread
             if (result.type === 'existed') {
