@@ -41,9 +41,25 @@ module.exports = (app, db) => {
                     durationValue += parseFloat(timeValue1) / 60;
                 }
             }
-
             if (timeValue2 && timeUnit2 === 'phút') {
                 durationValue += parseFloat(timeValue2) / 60;
+            }
+
+            const parsedDuration = parseFloat(durationValue);
+            if (period.includes('sáng') || period === 'đầu ngày') {
+                if (parsedDuration > 3.5)
+                    return await client.chat.postMessage({
+                        channel: message.channel,
+                        thread_ts: threadTs,
+                        text: `Thời gian nghỉ không hợp lệ!`
+                    })
+            } else if (period.includes('chiều') || period === 'cuối ngày') {
+                if (parsedDuration > 4.5)
+                    return await client.chat.postMessage({
+                        channel: message.channel,
+                        thread_ts: threadTs,
+                        text: `Thời gian nghỉ không hợp lệ!`
+                    })
             }
 
             durationValue = durationValue.toFixed(2);
@@ -52,9 +68,13 @@ module.exports = (app, db) => {
                 'đầu buổi sáng': { leavePeriod: 'start_morning', leaveDuration: durationValue },
                 'cuối buổi sáng': { leavePeriod: 'end_morning', leaveDuration: durationValue },
                 'cả buổi sáng': { leavePeriod: 'full_morning', leaveDuration: 3.5 },
+
                 'đầu buổi chiều': { leavePeriod: 'start_afternoon', leaveDuration: durationValue },
                 'cuối buổi chiều': { leavePeriod: 'end_afternoon', leaveDuration: durationValue },
                 'cả buổi chiều': { leavePeriod: 'full_afternoon', leaveDuration: 4.5 },
+
+                'đầu ngày': { leavePeriod: 'start_morning', leaveDuration: durationValue },
+                'cuối ngày': { leavePeriod: 'end_afternoon', leaveDuration: durationValue },
                 'cả ngày': { leavePeriod: 'full_day', leaveDuration: 8 },
             };
 

@@ -7,17 +7,22 @@ const { addCheckMark } = require("../services/addCheckMark");
 module.exports = (app, db) => {
     app.event('app_mention', async ({ event, client }) => {
         try {
-            const regex = /thống kê nghỉ\s*(của\s+<@(\w+)>)?\s*(trong\s+)?tháng\s+((0?[1-9]|1[0-2])\/\d{4})/i;
+            const regex = /thống kê nghỉ\s*(cũ nhất|mới nhất)?\s*(của\s+<@(\w+)>)?\s*(trong\s+)?tháng\s+((0?[1-9]|1[0-2])\/\d{4})/i;
             const match = event.text.match(regex);
             const threadTs = event.ts || event.thread_ts;
 
             if (!match) return;
-            const userId = match[2];
-            const [month, year] = match[4].split('/').map(Number);
+
+            let sortOrder = '';
+            if (match[1] === 'mới nhất') sortOrder = 'DESC';
+            else if (match[1 === 'cũ nhất']) sortOrder = 'ASC';
+
+            const userId = match[3];
+            const [month, year] = match[5].split('/').map(Number);
             if (isNaN(month) || isNaN(year)) return;
 
             if (userId) {
-                const stats = await getLeaveStatistics(db, userId, month, year);
+                const stats = await getLeaveStatistics(db, userId, month, year, sortOrder);
                 if (stats.length === 0) {
                     await client.chat.postMessage({
                         channel: event.channel,

@@ -1,8 +1,8 @@
-async function getLeaveStatistics(db, userId, month, year) {
+async function getLeaveStatistics(db, userId, month, year, sortOrder) {
     try {
         if (userId) {
             const [userLeaves] = await db.execute(`SELECT * FROM leave_requests 
-            WHERE user_id = ? AND MONTH(leave_day) = ? AND YEAR(leave_day) = ? AND request_status = ? ORDER BY leave_day`,
+            WHERE user_id = ? AND MONTH(leave_day) = ? AND YEAR(leave_day) = ? AND request_status = ? ORDER BY created_at ${sortOrder}`,
                 [userId, month, year, 'enabled']);
 
             return userLeaves;

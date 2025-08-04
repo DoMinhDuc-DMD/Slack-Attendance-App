@@ -6,5 +6,7 @@ CREATE TABLE leave_requests (
     leave_duration FLOAT NOT NULL,
     request_status ENUM('enabled','disabled') NOT NULL DEFAULT 'enabled',
     created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
-    updated_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
+    updated_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+
+    UNIQUE KEY unique_leave_request (user_id, leave_day, leave_period)
 );
