@@ -19,10 +19,6 @@ const app = new App({
         registerMessages(app, db);
 
         await app.start();
-        await app.client.chat.postMessage({
-            channel: process.env.BOT_SPAM_CHANNEL,
-            text: "Hello, world! I'm online and ready to respond."
-        });
     } catch (error) {
         console.error("Error starting the bot:", error);
     }

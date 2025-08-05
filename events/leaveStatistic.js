@@ -1,9 +1,8 @@
 const dayjs = require("dayjs");
 const { DM_FORMAT } = require("../services/formatDate");
-const { getLeaveStatistics } = require("../services/getLeaveStatistic");
+const { leaveStatisticGet } = require("../services/leaveStatisticGet");
 const { formatPeriod, formatDuration } = require("../services/formatVariables");
-const { addIcon } = require("../services/addIcon");
-const { responseInThread } = require("../services/responseInThread");
+const { responseInThread, addIcon } = require("../services/utils");
 
 module.exports = (app, db) => {
     app.event('app_mention', async ({ event, client }) => {
@@ -23,7 +22,7 @@ module.exports = (app, db) => {
             if (isNaN(month) || isNaN(year)) return;
 
             if (userId) {
-                const stats = await getLeaveStatistics(db, userId, month, year, sortOrder);
+                const stats = await leaveStatisticGet(db, userId, month, year, sortOrder);
                 if (stats.length === 0) {
                     return responseInThread(client, event.channel, threadTs, `Chưa có dữ liệu nghỉ của <@${userId}> tháng ${month}/${year}.`);
                 }
@@ -45,7 +44,7 @@ module.exports = (app, db) => {
                     `Chi tiết:\n${details}`
                 );
             } else {
-                const stats = await getLeaveStatistics(db, null, month, year);
+                const stats = await leaveStatisticGet(db, null, month, year);
                 if (stats.length === 0) {
                     return responseInThread(client, event.channel, threadTs, `Chưa có dữ liệu nghỉ tháng ${month}/${year}.`);
                 }

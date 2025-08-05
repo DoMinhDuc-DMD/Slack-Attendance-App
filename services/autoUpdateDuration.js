@@ -1,5 +1,6 @@
 const dayjs = require("dayjs");
 const { DATETIME_FORMAT } = require("./formatDate");
+const { updateLeaveRequest, insertLeaveRequest } = require("./utils");
 
 async function autoUpdateDuration(db, userId, leaveDay) {
     try {
@@ -33,18 +34,8 @@ async function autoUpdateDuration(db, userId, leaveDay) {
             if (res1 && res2) {
                 const total = Number((parseFloat(res1.leave_duration) + parseFloat(res2.leave_duration)).toFixed(2));
                 if (total === expectedDuration) {
-                    await db.execute(
-                        `UPDATE leave_requests
-                         SET request_status = ?, updated_at = ?
-                         WHERE user_id = ? AND leave_day = ? AND leave_period IN (?, ?)`,
-                        ['disabled', updateTime, userId, leaveDay, ...periods]
-                    );
-                    await db.execute(
-                        `INSERT INTO leave_requests 
-                         (user_id, leave_day, leave_period, leave_duration, created_at, updated_at)
-                         VALUES (?, ?, ?, ?, ?, ?)`,
-                        [userId, leaveDay, mergedPeriod, expectedDuration, updateTime, updateTime]
-                    );
+                    await updateLeaveRequest(db, updateTime, userId, leaveDay, periods)
+                    await insertLeaveRequest(db, userId, leaveDay, mergedPeriod, expectedDuration, updateTime, updateTime);
                     return await autoUpdateDuration(db, userId, leaveDay);
                 }
             }

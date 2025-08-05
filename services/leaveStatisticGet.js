@@ -1,4 +1,4 @@
-async function getLeaveStatistics(db, userId, month, year, sortOrder) {
+async function leaveStatisticGet(db, userId, month, year, sortOrder) {
     try {
         if (userId) {
             const [userLeaves] = await db.execute(`SELECT * FROM leave_requests 
@@ -26,4 +26,4 @@ async function getLeaveStatistics(db, userId, month, year, sortOrder) {
     }
 }
 
-module.exports = { getLeaveStatistics }
+module.exports = { leaveStatisticGet }

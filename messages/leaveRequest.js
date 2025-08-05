@@ -1,9 +1,23 @@
 const dayjs = require("dayjs");
 const { YMD_FORMAT, DMY_FORMAT, DATETIME_FORMAT } = require("../services/formatDate");
-const { checkLeaveRequest } = require("../services/checkLeaveRequest");
 const { formatPeriod } = require("../services/formatVariables");
-const { addIcon } = require("../services/addIcon");
-const { responseInThread } = require("../services/responseInThread");
+const { leaveRequestGet } = require("../services/leaveRequestGet");
+const { addIcon, responseInThread, periodMap } = require("../services/utils");
+
+function parseLeaveDuration(timeValue1, timeValue2, timeUnit1, timeUnit2) {
+    let duration = 0;
+    if (timeValue1 && timeUnit1) {
+        if (timeUnit1 === 'giờ' || timeUnit1 === 'h') {
+            duration += parseFloat(timeValue1);
+        } else if (timeUnit1 === 'phút') {
+            duration += parseFloat(timeValue1) / 60;
+        }
+    }
+    if (timeValue2 && timeUnit2 === 'phút') {
+        duration += parseFloat(timeValue2) / 60;
+    }
+    return parseFloat(duration.toFixed(2));
+}
 
 module.exports = (app, db) => {
     // Xử lý yêu cầu nghỉ khi được nhắc đến
@@ -20,7 +34,7 @@ module.exports = (app, db) => {
             const mentionedUser = match[1];
             // test local
             if (mentionedUser !== process.env.USER_TO_REQUEST.toLowerCase()) return;
-            // chạy trên server
+            // chạy trong workspace công ty
             // const usersToRequest = process.env.USERS_TO_REQUEST.split(', ').map(user => user.trim().toLowerCase());
             // if (!usersToRequest.includes(mentionedUser.toLowerCase())) return;
 
@@ -33,58 +47,34 @@ module.exports = (app, db) => {
 
             const period = (part + ' ' + timeOfDay).trim();
 
-            let durationValue = 0;
+            const durationValue = parseLeaveDuration(timeValue1, timeValue2, timeUnit1, timeUnit2);
 
-            if (timeValue1 && timeUnit1) {
-                if (timeUnit1 === 'giờ' || timeUnit1 === 'h') {
-                    durationValue += parseFloat(timeValue1);
-                } else if (timeUnit1 === 'phút') {
-                    durationValue += parseFloat(timeValue1) / 60;
-                }
-            }
-            if (timeValue2 && timeUnit2 === 'phút') {
-                durationValue += parseFloat(timeValue2) / 60;
-            }
-
-            const parsedDuration = parseFloat(durationValue);
-            if ((period.includes('sáng') || period === 'đầu ngày') && parsedDuration > 3.5) {
+            if ((period.includes('sáng') || period === 'đầu ngày') && durationValue > 3.5) {
                 return responseInThread(client, message.channel, threadTs, `Thời gian nghỉ không hợp lệ!`);
-            } else if ((period.includes('chiều') || period === 'cuối ngày') && parsedDuration > 4.5) {
+            } else if ((period.includes('chiều') || period === 'cuối ngày') && durationValue > 4.5) {
                 return responseInThread(client, message.channel, threadTs, `Thời gian nghỉ không hợp lệ!`);
             }
 
-            durationValue = durationValue.toFixed(2);
+            const map = periodMap(durationValue);
+            if (!(period in map)) return;
 
-            const periodMap = {
-                'đầu buổi sáng': { leavePeriod: 'start_morning', leaveDuration: durationValue },
-                'cuối buổi sáng': { leavePeriod: 'end_morning', leaveDuration: durationValue },
-                'cả buổi sáng': { leavePeriod: 'full_morning', leaveDuration: 3.5 },
+            const { leavePeriod, leaveDuration } = map[period];
+            const result = await leaveRequestGet(db, message.user, dayjs().format(YMD_FORMAT), leavePeriod, leaveDuration, receiveTime);
 
-                'đầu buổi chiều': { leavePeriod: 'start_afternoon', leaveDuration: durationValue },
-                'cuối buổi chiều': { leavePeriod: 'end_afternoon', leaveDuration: durationValue },
-                'cả buổi chiều': { leavePeriod: 'full_afternoon', leaveDuration: 4.5 },
-
-                'đầu ngày': { leavePeriod: 'start_morning', leaveDuration: durationValue },
-                'cuối ngày': { leavePeriod: 'end_afternoon', leaveDuration: durationValue },
-                'cả ngày': { leavePeriod: 'full_day', leaveDuration: 8 },
-            };
-
-            if (!(period in periodMap)) return;
-
-            const { leavePeriod, leaveDuration } = periodMap[period];
-            const result = await checkLeaveRequest(db, message.user, dayjs().format(YMD_FORMAT), leavePeriod, leaveDuration, receiveTime);
-
-            // Thả icon
-            if (result.type === 'inserted' || result.type === 'updated') addIcon(client, message.channel, threadTs, 'white_check_mark');
-
-            // Trả lời trong thread
-            if (result.type === 'existed') {
-                responseInThread(client, message.channel, threadTs, `Đã có yêu cầu nghỉ ${formatPeriod(leavePeriod).toLowerCase()} ${dayjs().format(DMY_FORMAT)}.`);
-            } else if (result.type === 'updated') {
-                responseInThread(client, message.channel, threadTs, `Đã cập nhật thời gian nghỉ ${formatPeriod(leavePeriod).toLowerCase()} ${dayjs().format(DMY_FORMAT)}.`);
+            switch (result.type) {
+                case 'inserted':
+                    addIcon(client, message.channel, threadTs, 'white_check_mark');
+                    break;
+                case 'updated':
+                    addIcon(client, message.channel, threadTs, 'white_check_mark');
+                    responseInThread(client, message.channel, threadTs, `Đã cập nhật thời gian nghỉ ${formatPeriod(leavePeriod).toLowerCase()} ${dayjs().format(DMY_FORMAT)}.`);
+                    break;
+                case 'existed':
+                    responseInThread(client, message.channel, threadTs, `Đã có yêu cầu nghỉ ${formatPeriod(leavePeriod).toLowerCase()} ${dayjs().format(DMY_FORMAT)}.`);
+                    break;
             }
         } catch (error) {
-            console.error("Error handling leave request (mention):", error);
+            console.error("Error handling leave request:", error);
         }
     });
 }
