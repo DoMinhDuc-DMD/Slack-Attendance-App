@@ -1,12 +1,9 @@
-const dayjs = require("dayjs");
 const { autoUpdateDuration } = require("./autoUpdateDuration");
-const { DATETIME_FORMAT } = require("./formatDate");
 const { periodMapGet, insertLeaveRequest } = require("./utils");
 
 // Kiểm tra yêu cầu nghỉ có tồn tại
 async function leaveRequestGet(db, userId, leaveDay, leavePeriod, leaveDuration, receiveTime) {
     try {
-        const updateTime = dayjs().format(DATETIME_FORMAT);
         const [allRequests] = await db.execute(
             `SELECT * FROM leave_requests WHERE user_id = ? AND leave_day = ? AND request_status = ?`,
             [userId, leaveDay, 'enabled']
@@ -35,10 +32,10 @@ async function leaveRequestGet(db, userId, leaveDay, leavePeriod, leaveDuration,
                 await db.execute(`UPDATE leave_requests 
                     SET request_status = ?, updated_at = ?
                     WHERE user_id = ? AND leave_day = ? AND leave_period IN (${subPeriods.map(() => '?').join(', ')})`,
-                    ['disabled', updateTime, userId, leaveDay, ...subPeriods]
+                    ['disabled', receiveTime, userId, leaveDay, ...subPeriods]
                 );
-                await insertLeaveRequest(db, userId, leaveDay, leavePeriod, leaveDuration, receiveTime, updateTime)
-                await autoUpdateDuration(db, userId, leaveDay);
+                await insertLeaveRequest(db, userId, leaveDay, leavePeriod, leaveDuration, receiveTime)
+                await autoUpdateDuration(db, userId, leaveDay, receiveTime);
                 return { type: 'updated' };
             }
         }
@@ -47,17 +44,17 @@ async function leaveRequestGet(db, userId, leaveDay, leavePeriod, leaveDuration,
         if (existing) {
             if (existing.leave_duration < leaveDuration) {
                 await db.execute(`UPDATE leave_requests SET leave_duration = ?, updated_at = ? WHERE id = ?`,
-                    [leaveDuration, updateTime, existing.id]
+                    [leaveDuration, receiveTime, existing.id]
                 );
-                await autoUpdateDuration(db, userId, leaveDay);
+                await autoUpdateDuration(db, userId, leaveDay, receiveTime);
                 return { type: 'updated' };
             }
             return { type: 'existed' };
         }
 
         // Nếu không trùng, insert bản ghi mới
-        await insertLeaveRequest(db, userId, leaveDay, leavePeriod, leaveDuration, receiveTime, updateTime)
-        await autoUpdateDuration(db, userId, leaveDay);
+        await insertLeaveRequest(db, userId, leaveDay, leavePeriod, leaveDuration, receiveTime)
+        await autoUpdateDuration(db, userId, leaveDay, receiveTime);
         return { type: 'inserted' };
     } catch (error) {
         console.error("Error checking existing leave request: ", error);

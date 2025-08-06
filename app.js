@@ -2,8 +2,10 @@ const { App } = require('@slack/bolt');
 require('dotenv').config();
 const { createDbConnection } = require('./services/createDbConnection');
 
+const registerCommands = require('./commands');
 const registerEvents = require('./events');
 const registerMessages = require('./messages');
+const registerViews = require('./views');
 
 const app = new App({
     token: process.env.SLACK_OAUTH_TOKEN,
@@ -15,8 +17,10 @@ const app = new App({
     try {
         const db = await createDbConnection();
 
+        registerCommands(app);
         registerEvents(app, db);
         registerMessages(app, db);
+        registerViews(app, db);
 
         await app.start();
     } catch (error) {

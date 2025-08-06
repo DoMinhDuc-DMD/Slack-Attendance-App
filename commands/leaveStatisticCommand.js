@@ -1,0 +1,89 @@
+module.exports = (app) => {
+    // Thống kê dùng command của slack và trả lời trong channel thống kê
+    app.command('/thongkenghi', async ({ command, ack, client }) => {
+        await ack();
+
+        try {
+            const currentYear = new Date().getFullYear();
+
+            const userList = await client.users.list();
+            const users = userList.members.filter(user => !user.is_bot && user.id !== process.env.SLACK_BOT_ID);
+
+            const userOptions = users.map(user => ({
+                text: { type: 'plain_text', text: user.real_name || user.name },
+                value: user.id
+            }));
+            const monthOptions = Array.from({ length: 12 }, (_, i) => {
+                const month = i + 1;
+                return {
+                    text: { type: "plain_text", text: `Tháng ${month}` },
+                    value: month.toString()
+                };
+            });
+            const yearOptions = Array.from({ length: 3 }, (_, i) => {
+                const year = currentYear - i;
+                return {
+                    text: { type: "plain_text", text: `${year}` },
+                    value: year.toString()
+                };
+            });
+
+            await client.views.open({
+                trigger_id: command.trigger_id,
+                view: {
+                    type: "modal",
+                    callback_id: "leave_statistic_modal",
+                    title: { type: "plain_text", text: "Thống kê nghỉ" },
+                    submit: { type: "plain_text", text: "Xem" },
+                    close: { type: "plain_text", text: "Huỷ" },
+                    blocks: [
+                        {
+                            type: "input",
+                            block_id: "user_block",
+                            label: { type: "plain_text", text: "Chọn nhân viên" },
+                            element: {
+                                type: "multi_static_select",
+                                action_id: "user_select",
+                                options: userOptions,
+                                placeholder: {
+                                    type: 'plain_text',
+                                    text: 'Chọn nhân viên'
+                                }
+                            }
+                        },
+                        {
+                            type: "input",
+                            block_id: "month_block",
+                            label: { type: "plain_text", text: "Chọn tháng" },
+                            element: {
+                                type: "static_select",
+                                action_id: "month_select",
+                                options: monthOptions,
+                                placeholder: {
+                                    type: 'plain_text',
+                                    text: 'Chọn tháng'
+                                }
+                            }
+                        },
+                        {
+                            type: "input",
+                            block_id: "year_block",
+                            label: { type: "plain_text", text: "Chọn năm" },
+                            element: {
+                                type: "static_select",
+                                action_id: "year_select",
+                                options: yearOptions,
+                                placeholder: {
+                                    type: 'plain_text',
+                                    text: 'Chọn năm'
+                                }
+                            }
+                        }
+                    ]
+                }
+            });
+        } catch (error) {
+            console.error("Error opening modal:", error);
+        }
+    });
+}

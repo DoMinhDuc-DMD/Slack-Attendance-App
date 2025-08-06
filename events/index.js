@@ -1,7 +1,7 @@
-const userStatisticAttendance = require('./leaveStatistic');
 const memberJoined = require('./memberJoined');
+const leaveStatistic = require('./leaveStatistic');
 
 module.exports = (app, db) => {
-    userStatisticAttendance(app, db);
     memberJoined(app);
+    leaveStatistic(app, db);
 }

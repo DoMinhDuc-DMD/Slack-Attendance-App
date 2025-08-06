@@ -43,21 +43,21 @@ async function responseInThread(client, channel, threadTs, text) {
     });
 }
 
-async function insertLeaveRequest(db, userId, leaveDay, leavePeriod, leaveDuration, receiveTime, updateTime) {
+async function insertLeaveRequest(db, userId, leaveDay, leavePeriod, leaveDuration, receiveTime) {
     await db.execute(
         `INSERT INTO leave_requests 
             (user_id, leave_day, leave_period, leave_duration, created_at, updated_at) 
             VALUES (?, ?, ?, ?, ?, ?)`,
-        [userId, leaveDay, leavePeriod, leaveDuration, receiveTime, updateTime]
+        [userId, leaveDay, leavePeriod, leaveDuration, receiveTime, receiveTime]
     );
 }
 
-async function updateLeaveRequest(db, updateTime, userId, leaveDay, periods) {
+async function updateLeaveRequest(db, receiveTime, userId, leaveDay, periods) {
     await db.execute(
         `UPDATE leave_requests
             SET request_status = ?, updated_at = ?
             WHERE user_id = ? AND leave_day = ? AND leave_period IN (?, ?)`,
-        ['disabled', updateTime, userId, leaveDay, ...periods]
+        ['disabled', receiveTime, userId, leaveDay, ...periods]
     );
 }
 
