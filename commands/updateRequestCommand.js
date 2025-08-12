@@ -1,6 +1,6 @@
 const dayjs = require("dayjs");
 const { DMY_FORMAT } = require("../services/formatDate");
-const { getLabelFromValue, periodMapOptions, replyInThread } = require("../services/utils");
+const { getLabelFromValue, periodMapOptions, responseMessage } = require("../services/utils");
 
 module.exports = (app, db) => {
     const getRequestOptions = async (userId) => {
@@ -28,7 +28,7 @@ module.exports = (app, db) => {
             const periodOptions = getPeriodOptions();
 
             if (requestOptions.length === 0) {
-                return await replyInThread(client, userId, `Bạn chưa có yêu cầu xin nghỉ nào để cập nhật. Hãy đăng ký nghỉ trước!`);
+                return await responseMessage(client, userId, `Bạn chưa có yêu cầu xin nghỉ nào để cập nhật. Hãy đăng ký nghỉ trước!`);
             }
 
             await client.views.open({
@@ -95,7 +95,7 @@ module.exports = (app, db) => {
             const periodRequest = selectedRequest.split(" ").slice(0, -1).join(" ");
             const period = periodMapOptions[periodRequest].leavePeriod.split("_")[1];
 
-            const updatePeriodOptions = periodOptions.filter(p => p.value.includes(period));
+            const updatePeriodOptions = periodOptions.filter(p => p.value.includes(period) || p.value.includes('day'));
 
             await client.views.update({
                 view_id: body.view.id,
@@ -166,21 +166,9 @@ module.exports = (app, db) => {
 
             const [type] = selectedPeriod.split('_');
 
-            let durationBlock = {
-                type: 'input',
-                block_id: 'update_duration',
-                label: { type: 'plain_text', text: 'Thời gian nghỉ' },
-                element: {
-                    type: 'plain_text_input',
-                    action_id: 'update_duration_input',
-                    placeholder: { type: 'plain_text', text: 'Nhập thời gian nghỉ mới (VD: 1h, 30 phút)' }
-                },
-            };
-
             let initialDuration = "";
             if (type === 'full') {
                 initialDuration = Object.values(periodMapOptions).find(period => period.leavePeriod === selectedPeriod)?.leaveDuration;
-                durationBlock.element.initial_value = initialDuration;
             }
 
             await client.views.update({
@@ -219,7 +207,17 @@ module.exports = (app, db) => {
                                 initial_option: updatePeriodOptions.find(opt => opt.value === selectedPeriod)
                             },
                         },
-                        durationBlock
+                        {
+                            type: 'input',
+                            block_id: 'update_duration',
+                            label: { type: 'plain_text', text: 'Thời gian nghỉ' },
+                            element: {
+                                type: 'plain_text_input',
+                                action_id: 'update_duration_input',
+                                placeholder: { type: 'plain_text', text: 'Nhập thời gian nghỉ mới (VD: 1h, 30 phút)' },
+                                initial_value: initialDuration
+                            },
+                        }
                     ]
                 }
             });

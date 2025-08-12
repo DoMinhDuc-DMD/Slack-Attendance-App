@@ -5,6 +5,7 @@ module.exports = (app) => {
         await ack();
 
         try {
+            const userId = command.user_id;
             const periodOptions = Object.entries(periodMapOptions).map(([label, value]) => ({
                 text: { type: 'plain_text', text: label },
                 value: value.leavePeriod
@@ -15,7 +16,7 @@ module.exports = (app) => {
                 view: {
                     type: 'modal',
                     callback_id: 'new_request_modal',
-                    private_metadata: command.user_id,
+                    private_metadata: JSON.stringify({ userId, initialDuration: "" }),
                     title: { type: 'plain_text', text: 'Xin phép nghỉ' },
                     submit: { type: 'plain_text', text: 'Gửi yêu cầu' },
                     close: { type: 'plain_text', text: 'Hủy' },
@@ -63,26 +64,15 @@ module.exports = (app) => {
     app.action('new_period_input', async ({ body, ack, client }) => {
         await ack();
 
+        const metadata = JSON.parse(body.view.private_metadata);
+
         const selectedValue = body.actions[0].selected_option.value;
-        const [part] = selectedValue.split('_');
+        const [type] = selectedValue.split('_');
 
-        let durationBlock = {
-            type: 'input',
-            block_id: 'new_duration',
-            label: { type: 'plain_text', text: 'Thời gian nghỉ' },
-            element: {
-                type: 'plain_text_input',
-                action_id: 'new_duration_input',
-                placeholder: { type: 'plain_text', text: 'Nhập thời gian nghỉ (VD: 1h, 30 phút)' }
-            },
-        };
-
-        let duration = '';
-
-        if (part === 'full') {
-            duration = Object.values(periodMapOptions).find(period => period.leavePeriod === selectedValue).leaveDuration;
-            durationBlock.element.initial_value = duration;
-        } else { durationBlock.element.initial_value = "" }
+        let initialDuration = "";
+        if (type === 'full') {
+            initialDuration = Object.values(periodMapOptions).find(period => period.leavePeriod === selectedValue)?.leaveDuration;
+        }
 
         await client.views.update({
             view_id: body.view.id,
@@ -90,10 +80,7 @@ module.exports = (app) => {
             view: {
                 type: 'modal',
                 callback_id: 'new_request_modal',
-                private_metadata: JSON.stringify({
-                    userId: body.view.private_metadata,
-                    durationValue: duration
-                }),
+                private_metadata: JSON.stringify({ ...metadata, initialDuration }),
                 title: { type: 'plain_text', text: 'Xin phép nghỉ' },
                 submit: { type: 'plain_text', text: 'Gửi yêu cầu' },
                 close: { type: 'plain_text', text: 'Hủy' },
@@ -127,7 +114,17 @@ module.exports = (app) => {
                             }
                         },
                     },
-                    durationBlock
+                    {
+                        type: 'input',
+                        block_id: 'new_duration',
+                        label: { type: 'plain_text', text: 'Thời gian nghỉ' },
+                        element: {
+                            type: 'plain_text_input',
+                            action_id: 'new_duration_input',
+                            placeholder: { type: 'plain_text', text: 'Nhập thời gian nghỉ (VD: 1h, 30 phút)' },
+                            initial_value: initialDuration
+                        },
+                    }
                 ]
             }
         });

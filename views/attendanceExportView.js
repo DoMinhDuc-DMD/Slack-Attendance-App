@@ -1,7 +1,7 @@
 const dayjs = require("dayjs");
-const { attendanceExportGet } = require("../services/attendanceExportGet");
+const { attendanceExport } = require("../services/attendanceExport");
 const ExcelJS = require("exceljs");
-const { replyInThread } = require("../services/utils");
+const { responseMessage } = require("../services/utils");
 const { statisticChannel } = require("../services/formatVariables");
 
 module.exports = (app, db) => {
@@ -26,7 +26,7 @@ module.exports = (app, db) => {
 
         for (const user of userList) {
             const userId = user.value;
-            const stats = await attendanceExportGet(db, userId, month, year);
+            const stats = await attendanceExport(db, userId, month, year);
 
             let enableDate = [];
             let enableDay = [];
@@ -36,7 +36,7 @@ module.exports = (app, db) => {
                 enableDay.push(dayjs(stat.leave_day).day());
             });
 
-            await replyInThread(client, statisticChannel, `Đã cuất dữ liệu của <@${userId}> tháng ${month}/${year}.`)
+            await responseMessage(client, statisticChannel, `Đã cuất dữ liệu của <@${userId}> tháng ${month}/${year}.`)
         }
     });
 }

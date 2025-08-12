@@ -1,7 +1,6 @@
 const dayjs = require("dayjs");
 const { DMY_FORMAT, DATETIME_FORMAT } = require("../services/formatDate");
-const { getLabelFromValue, replyInThread } = require("../services/utils");
-const { newRequest } = require("../services/newRequest");
+const { getLabelFromValue, responseMessage, insertLeaveRequest, calculateDuration, checkExistRequest } = require("../services/utils");
 const { requestChannel, userToRequest } = require("../services/formatVariables");
 
 module.exports = (app, db) => {
@@ -14,37 +13,28 @@ module.exports = (app, db) => {
             const userId = metadata.userId;
             const newDay = view.state.values.new_datepicker.new_datepicker_input.selected_date;
             const newPeriod = view.state.values.new_period.new_period_input.selected_option.value;
-            const newDuration = view.state.values.new_duration.new_duration_input.value || metadata.durationValue;
+            const newDuration = view.state.values.new_duration.new_duration_input.value || metadata.initialDuration;
             const pendingTime = dayjs().format(DATETIME_FORMAT);
 
-            const regex = /(?:(\d+)\s*(?:giờ|h))|(?:(\d+)\s*phút)/gi;
-            let match;
-            let matched = false;
-            let duration = 0;
-
-            while ((match = regex.exec(newDuration)) !== null) {
-                matched = true;
-                if (match[1]) {
-                    duration += parseFloat(match[1]);
-                } else if (match[2]) {
-                    duration += parseFloat(match[2]) / 60;
-                } else return;
-            }
-
-            if (!matched) {
-                console.log("Không đúng định dạng thời gian!");
-                return;
-            }
-
-            duration = parseFloat(duration.toFixed(2));
+            const durationValue = calculateDuration(newDuration);
             const localizedPeriod = getLabelFromValue(newPeriod).toLowerCase();
 
-            const request = await replyInThread(
+            const [checkExist] = await checkExistRequest(db, userId, newDay, newPeriod);
+            if (checkExist.length > 0) {
+                return await responseMessage(
+                    client,
+                    userId,
+                    `Đã có yêu cầu nghỉ ${localizedPeriod.split(" ").slice(-2).join(" ")} ${dayjs(newDay).format(DMY_FORMAT)} rồi. Hãy cập nhật lại yêu cầu!`
+                );
+            }
+
+            const request = await responseMessage(
+                client,
                 requestChannel,
-                `<@${userToRequest}> <@${userId}> xin phép nghỉ ${!newPeriod.includes('full') ? `${newDuration} ` : ''}${localizedPeriod} ${dayjs(newDay).format(DMY_FORMAT)}`
+                `<@${userToRequest}> <@${userId}> xin nghỉ ${!newPeriod.includes('full') ? `${newDuration} ` : ''}${localizedPeriod} ${dayjs(newDay).format(DMY_FORMAT)}`
             );
 
-            await newRequest(db, userId, newDay, newPeriod, duration, request.ts, pendingTime);
+            await insertLeaveRequest(db, userId, newDay, newPeriod, durationValue, request.ts, pendingTime);
         } catch (error) {
             console.error("Error handling leave request modal submission:", error);
         }

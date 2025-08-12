@@ -1,4 +1,4 @@
-async function leaveStatisticViewGet(db, userId, month, year) {
+async function leaveStatistic(db, userId, month, year) {
     try {
         const [userLeaves] = await db.execute(`SELECT * FROM leave_requests 
             WHERE user_id = ? AND MONTH(leave_day) = ? AND YEAR(leave_day) = ? AND request_status = ?`,
@@ -11,4 +11,4 @@ async function leaveStatisticViewGet(db, userId, month, year) {
     }
 }
 
-module.exports = { leaveStatisticViewGet }
+module.exports = { leaveStatistic }

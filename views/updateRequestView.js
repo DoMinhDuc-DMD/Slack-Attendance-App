@@ -1,5 +1,5 @@
 const dayjs = require("dayjs");
-const { periodMapOptions, getLabelFromValue, insertLeaveRequest, replyInThread } = require("../services/utils");
+const { periodMapOptions, getLabelFromValue, insertLeaveRequest, responseMessage } = require("../services/utils");
 const { DATETIME_FORMAT, YMD_FORMAT, DMY_FORMAT } = require("../services/formatDate");
 const { requestChannel, userToRequest } = require("../services/formatVariables");
 
@@ -32,7 +32,7 @@ module.exports = (app, db) => {
             }
 
             if (!matched) {
-                return replyInThread(client, userId, `Không đúng định dạng thời gian, hãy nhập lại!`)
+                return responseMessage(client, userId, `Không đúng định dạng thời gian, hãy nhập lại!`)
             }
 
             duration = parseFloat(duration.toFixed(2));
@@ -50,10 +50,10 @@ module.exports = (app, db) => {
             );
 
             if (!oldTimestamp.length) {
-                return replyInThread(client, userId, `Không tìm thấy tin nhắn cũ để trả lời (có thể đã bị xóa)!`)
+                return responseMessage(client, userId, `Không tìm thấy tin nhắn cũ để trả lời (có thể đã bị xóa)!`)
             }
 
-            const request = await replyInThread(
+            const request = await responseMessage(
                 client,
                 requestChannel,
                 `<@${userToRequest}> <@${userId}> cập nhật thời gian nghỉ thành ${updateDuration} ${getLabelFromValue(updatePeriod).toLowerCase()} ${day}`,
