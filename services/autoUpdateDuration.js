@@ -1,4 +1,4 @@
-const { updateLeaveRequest, insertLeaveRequest } = require("./utils");
+const { disableLeaveRequest, insertLeaveRequest } = require("./utils");
 
 async function autoUpdateDuration(db, userId, leaveDay, receiveTime) {
     try {
@@ -31,7 +31,7 @@ async function autoUpdateDuration(db, userId, leaveDay, receiveTime) {
             if (res1 && res2) {
                 const total = Number((parseFloat(res1.leave_duration) + parseFloat(res2.leave_duration)).toFixed(2));
                 if (total === expectedDuration) {
-                    await updateLeaveRequest(db, receiveTime, userId, leaveDay, periods)
+                    await disableLeaveRequest(db, receiveTime, userId, leaveDay, periods)
                     await insertLeaveRequest(db, userId, leaveDay, mergedPeriod, expectedDuration, receiveTime);
                     return await autoUpdateDuration(db, userId, leaveDay, receiveTime);
                 }

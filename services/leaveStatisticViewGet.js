@@ -2,7 +2,7 @@ async function leaveStatisticViewGet(db, userId, month, year) {
     try {
         const [userLeaves] = await db.execute(`SELECT * FROM leave_requests 
             WHERE user_id = ? AND MONTH(leave_day) = ? AND YEAR(leave_day) = ? AND request_status = ?`,
-            [userId, month, year, 'enabled']);
+            [userId, month, year, 'confirmed']);
 
         return userLeaves;
     } catch (error) {

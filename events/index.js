@@ -1,7 +1,7 @@
 const memberJoined = require('./memberJoined');
-const leaveStatistic = require('./leaveStatistic');
+const confirmRequestEvent = require('./confirmRequestEvent');
 
 module.exports = (app, db) => {
     memberJoined(app);
-    leaveStatistic(app, db);
+    confirmRequestEvent(app, db);
 }

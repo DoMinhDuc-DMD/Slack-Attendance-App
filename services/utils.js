@@ -1,64 +1,56 @@
-const periodMapGet = {
-    'full_morning': ['start_morning', 'end_morning'],
-    'full_afternoon': ['start_afternoon', 'end_afternoon'],
-    'full_day': [
-        'full_morning', 'full_afternoon',
-        'start_morning', 'end_morning',
-        'start_afternoon', 'end_afternoon'
-    ]
+const periodMapOptions = {
+    'Đầu buổi sáng': { leavePeriod: 'start_morning' },
+    'Cuối buổi sáng': { leavePeriod: 'end_morning' },
+    'Cả buổi sáng': { leavePeriod: 'full_morning', leaveDuration: '3 giờ 30 phút' },
+    'Đầu buổi chiều': { leavePeriod: 'start_afternoon' },
+    'Cuối buổi chiều': { leavePeriod: 'end_afternoon' },
+    'Cả buổi chiều': { leavePeriod: 'full_afternoon', leaveDuration: '4 giờ 30 phút' },
+    'Cả ngày': { leavePeriod: 'full_day', leaveDuration: '8 giờ' },
+};
+
+function getLabelFromValue(val) {
+    return Object.entries(periodMapOptions).find(([label, value]) => value.leavePeriod === val)?.[0] || null;
 }
 
-const periodMap = (durationValue) => ({
-    'đầu buổi sáng': { leavePeriod: 'start_morning', leaveDuration: durationValue },
-    'cuối buổi sáng': { leavePeriod: 'end_morning', leaveDuration: durationValue },
-    'cả buổi sáng': { leavePeriod: 'full_morning', leaveDuration: 3.5 },
-
-    'đầu buổi chiều': { leavePeriod: 'start_afternoon', leaveDuration: durationValue },
-    'cuối buổi chiều': { leavePeriod: 'end_afternoon', leaveDuration: durationValue },
-    'cả buổi chiều': { leavePeriod: 'full_afternoon', leaveDuration: 4.5 },
-
-    'đầu ngày': { leavePeriod: 'start_morning', leaveDuration: durationValue },
-    'cuối ngày': { leavePeriod: 'end_afternoon', leaveDuration: durationValue },
-    'cả ngày': { leavePeriod: 'full_day', leaveDuration: 8 },
-})
-
-async function addIcon(client, channel, threadTs, icon) {
-    try {
-        await client.reactions.add({
-            name: icon,
-            channel: channel,
-            timestamp: threadTs,
-        });
-    } catch (error) {
-        if (error.data && error.data.error === 'already_reacted') return;
-        else console.error("Error adding reaction:", error);
-    }
-}
-
-async function responseInThread(client, channel, threadTs, text) {
-    await client.chat.postMessage({
-        channel: channel,
-        thread_ts: threadTs,
+async function replyInThread(client, channelId, text, threadTs = null) {
+    const payload = {
+        channel: channelId,
         text: text
-    });
+    }
+    if (threadTs && /^\d+\.\d+$/.test(threadTs.toString())) {
+        payload.thread_ts = threadTs.toString();
+    }
+    return await client.chat.postMessage(payload);
 }
 
-async function insertLeaveRequest(db, userId, leaveDay, leavePeriod, leaveDuration, receiveTime) {
+async function insertLeaveRequest(db, userId, leaveDay, leavePeriod, leaveDuration, timestamp, receiveTime) {
     await db.execute(
         `INSERT INTO leave_requests 
-            (user_id, leave_day, leave_period, leave_duration, created_at, updated_at) 
-            VALUES (?, ?, ?, ?, ?, ?)`,
-        [userId, leaveDay, leavePeriod, leaveDuration, receiveTime, receiveTime]
+            (user_id, leave_day, leave_period, leave_duration, timestamp, request_status, created_at, updated_at) 
+            VALUES (?, ?, ?, ?, ?, ?, ?, ?)`,
+        [userId, leaveDay, leavePeriod, leaveDuration, timestamp, 'pending', receiveTime, receiveTime]
     );
 }
 
-async function updateLeaveRequest(db, receiveTime, userId, leaveDay, periods) {
+async function confirmLeaveRequest(db, receiveTime, userId, timestamp) {
     await db.execute(
         `UPDATE leave_requests
             SET request_status = ?, updated_at = ?
-            WHERE user_id = ? AND leave_day = ? AND leave_period IN (?, ?)`,
-        ['disabled', receiveTime, userId, leaveDay, ...periods]
+            WHERE user_id = ? AND timestamp = ?`,
+        ['confirmed', receiveTime, userId, timestamp]
     );
 }
 
-module.exports = { periodMapGet, periodMap, addIcon, responseInThread, insertLeaveRequest, updateLeaveRequest }
+async function disableLeaveRequest(db, receiveTime, userId, leaveDay, period, timestamp) {
+    await db.execute(
+        `UPDATE leave_requests 
+        SET request_status = ?, updated_at = ?
+        WHERE user_id = ? 
+          AND leave_day = ? 
+          AND leave_period LIKE ? 
+          AND timestamp <> ?`,
+        ['disabled', receiveTime, userId, leaveDay, `%${period}%`, timestamp]
+    );
+}
+
+module.exports = { periodMapOptions, getLabelFromValue, replyInThread, insertLeaveRequest, confirmLeaveRequest, disableLeaveRequest }

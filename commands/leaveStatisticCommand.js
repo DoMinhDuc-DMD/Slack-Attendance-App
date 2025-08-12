@@ -1,10 +1,12 @@
+const dayjs = require("dayjs");
+
 module.exports = (app) => {
     // Thống kê dùng command của slack và trả lời trong channel thống kê
     app.command('/thongkenghi', async ({ command, ack, client }) => {
         await ack();
 
         try {
-            const currentYear = new Date().getFullYear();
+            const currentYear = dayjs().year();
 
             const userList = await client.users.list();
             const users = userList.members.filter(user => !user.is_bot && user.id !== process.env.SLACK_BOT_ID);

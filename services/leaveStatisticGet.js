@@ -3,7 +3,7 @@ async function leaveStatisticGet(db, userId, month, year, sortOrder) {
         if (userId) {
             const [userLeaves] = await db.execute(`SELECT * FROM leave_requests 
             WHERE user_id = ? AND MONTH(leave_day) = ? AND YEAR(leave_day) = ? AND request_status = ? ORDER BY created_at ${sortOrder}`,
-                [userId, month, year, 'enabled']);
+                [userId, month, year, 'confirmed']);
 
             return userLeaves;
         } else {
@@ -14,7 +14,7 @@ async function leaveStatisticGet(db, userId, month, year, sortOrder) {
                     SUM(leave_duration) AS total_times 
                 FROM leave_requests 
                 WHERE MONTH(leave_day) = ? AND YEAR(leave_day) = ? AND request_status = ? GROUP BY user_id ORDER BY total_times DESC`,
-                [month, year, 'enabled']
+                [month, year, 'confirmed']
             );
 
             return allLeaves;

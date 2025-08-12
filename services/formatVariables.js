@@ -1,3 +1,7 @@
+const userToRequest = process.env.USER_TO_REQUEST;
+const requestChannel = process.env.REQUEST_CHANNEL;
+const statisticChannel = process.env.STATISTIC_CHANNEL;
+
 function formatPeriod(period) {
     const map = {
         start_morning: "Đầu buổi sáng",
@@ -27,6 +31,9 @@ function formatDuration(duration) {
 }
 
 module.exports = {
+    userToRequest,
+    requestChannel,
+    statisticChannel,
     formatPeriod,
     formatDuration,
 };

@@ -1,7 +1,8 @@
 const dayjs = require("dayjs");
-const { formatDuration, formatPeriod } = require("../services/formatVariables");
+const { formatDuration, formatPeriod, statisticChannel } = require("../services/formatVariables");
 const { leaveStatisticViewGet } = require("../services/leaveStatisticViewGet");
 const { DM_FORMAT } = require("../services/formatDate");
+const { replyInThread } = require("../services/utils");
 
 module.exports = (app, db) => {
     app.view('leave_statistic_modal', async ({ ack, view, client }) => {
@@ -15,7 +16,6 @@ module.exports = (app, db) => {
             const userId = user.value;
             const stats = await leaveStatisticViewGet(db, userId, month, year);
 
-            const channelId = process.env.STATISTIC_CHANNEL;
             let message = '';
 
             if (stats.length === 0) {
@@ -37,10 +37,7 @@ module.exports = (app, db) => {
                     `* *Chi tiết:*\n${details}`;
             }
 
-            await client.chat.postMessage({
-                channel: channelId,
-                text: message
-            });
+            await replyInThread(client, statisticChannel, message)
         }
     });
 

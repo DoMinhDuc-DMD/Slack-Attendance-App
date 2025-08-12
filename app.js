@@ -17,7 +17,7 @@ const app = new App({
     try {
         const db = await createDbConnection();
 
-        registerCommands(app);
+        registerCommands(app, db);
         registerEvents(app, db);
         registerMessages(app, db);
         registerViews(app, db);
