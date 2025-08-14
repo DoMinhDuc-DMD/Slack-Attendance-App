@@ -7,13 +7,11 @@ module.exports = (app, db) => {
     app.event('reaction_added', async ({ event }) => {
         try {
             const confirmTime = dayjs().format(DATETIME_FORMAT);
-
             const [matchedRequest] = await db.execute(`SELECT * FROM leave_requests WHERE timestamp = ?`, [event.item.ts]);
 
             if (matchedRequest.length > 0
-                && event.user == userToRequest
+                && event.user === userToRequest
                 && event.reaction === 'white_check_mark'
-                // && event.user !== event.item_user
             ) {
                 const req = matchedRequest[0];
                 const period = req.leave_period.split("_")[1];
