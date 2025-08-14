@@ -14,7 +14,7 @@ module.exports = (app, db) => {
 
             const updateRequest = view.state.values.update_request.update_request_input.selected_option.value;
             const updatePeriod = view.state.values.update_period.update_period_input.selected_option.value;
-            const updateDuration = view.state.values.update_duration.update_duration_input.value || metadata.initialDuration;
+            const updateDuration = metadata.initialDuration || view.state.values.update_duration.update_duration_input.selected_option.value;
             const updateTime = dayjs().format(DATETIME_FORMAT);
 
             const regex = /(?:(\d+)\s*(?:giờ|h))|(?:(\d+)\s*phút)/gi;
@@ -56,7 +56,7 @@ module.exports = (app, db) => {
             const request = await responseMessage(
                 client,
                 requestChannel,
-                `<@${userToRequest}> <@${userId}> cập nhật thời gian nghỉ thành ${updateDuration} ${getLabelFromValue(updatePeriod).toLowerCase()} ${day}`,
+                `<@${userToRequest}> <@${userId}> cập nhật thời gian nghỉ thành${updatePeriod.includes('full') ? '' : ` ${updateDuration}`} ${getLabelFromValue(updatePeriod).toLowerCase()} ${day}`,
                 oldTimestamp[0].timestamp
             );
 

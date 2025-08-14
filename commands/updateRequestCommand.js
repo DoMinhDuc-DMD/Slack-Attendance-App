@@ -1,6 +1,6 @@
 const dayjs = require("dayjs");
 const { DMY_FORMAT } = require("../services/formatDate");
-const { getLabelFromValue, periodMapOptions, responseMessage } = require("../services/utils");
+const { getLabelFromValue, periodMapOptions, responseMessage, durationMapOptions } = require("../services/utils");
 
 module.exports = (app, db) => {
     const getRequestOptions = async (userId) => {
@@ -25,8 +25,6 @@ module.exports = (app, db) => {
         try {
             const userId = command.user_id
             const requestOptions = await getRequestOptions(userId);
-            const periodOptions = getPeriodOptions();
-
             if (requestOptions.length === 0) {
                 return await responseMessage(client, userId, `Bạn chưa có yêu cầu xin nghỉ nào để cập nhật. Hãy đăng ký nghỉ trước!`);
             }
@@ -52,28 +50,6 @@ module.exports = (app, db) => {
                                 placeholder: { type: 'plain_text', text: 'Chọn yêu cầu nghỉ cần cập nhật' },
                                 options: requestOptions
                             }
-                        },
-                        {
-                            type: 'input',
-                            block_id: 'update_period',
-                            dispatch_action: true,
-                            label: { type: 'plain_text', text: 'Buổi nghỉ' },
-                            element: {
-                                type: 'static_select',
-                                action_id: 'update_period_input',
-                                placeholder: { type: 'plain_text', text: 'Chọn buổi nghỉ mởi' },
-                                options: periodOptions
-                            },
-                        },
-                        {
-                            type: 'input',
-                            block_id: 'update_duration',
-                            label: { type: 'plain_text', text: 'Thời gian nghỉ' },
-                            element: {
-                                type: 'plain_text_input',
-                                action_id: 'update_duration_input',
-                                placeholder: { type: 'plain_text', text: 'Nhập thời gian nghỉ mới (VD: 1h, 30 phút)' }
-                            },
                         }
                     ]
                 }
@@ -134,16 +110,6 @@ module.exports = (app, db) => {
                                 placeholder: { type: 'plain_text', text: 'Chọn buổi nghỉ mởi' },
                                 options: updatePeriodOptions
                             },
-                        },
-                        {
-                            type: 'input',
-                            block_id: 'update_duration',
-                            label: { type: 'plain_text', text: 'Thời gian nghỉ' },
-                            element: {
-                                type: 'plain_text_input',
-                                action_id: 'update_duration_input',
-                                placeholder: { type: 'plain_text', text: 'Nhập thời gian nghỉ mới (VD: 1h, 30 phút)' }
-                            },
                         }
                     ]
                 }
@@ -162,14 +128,15 @@ module.exports = (app, db) => {
             const updatePeriodOptions = metadata.updatePeriodOptions;
 
             const requestOptions = await getRequestOptions(userId);
-            const selectedPeriod = body.actions[0].selected_option.value;
 
+            const selectedPeriod = body.actions[0].selected_option.value;
             const [type] = selectedPeriod.split('_');
 
-            let initialDuration = "";
-            if (type === 'full') {
-                initialDuration = Object.values(periodMapOptions).find(period => period.leavePeriod === selectedPeriod)?.leaveDuration;
-            }
+            const initialDuration = Object.values(periodMapOptions).find(period => period.leavePeriod === selectedPeriod)?.leaveDuration;
+            const durationOptions = Object.entries(durationMapOptions).map(([label, value]) => ({
+                text: { type: 'plain_text', text: label },
+                value: value.leaveDuration
+            }));
 
             await client.views.update({
                 view_id: body.view.id,
@@ -177,7 +144,7 @@ module.exports = (app, db) => {
                 view: {
                     type: 'modal',
                     callback_id: 'update_request_modal',
-                    private_metadata: JSON.stringify({ userId, initialDuration }),
+                    private_metadata: JSON.stringify({ ...metadata, initialDuration }),
                     title: { type: 'plain_text', text: 'Cập nhật yêu cầu nghỉ' },
                     submit: { type: 'plain_text', text: 'Gửi yêu cầu' },
                     close: { type: 'plain_text', text: 'Hủy' },
@@ -210,12 +177,17 @@ module.exports = (app, db) => {
                         {
                             type: 'input',
                             block_id: 'update_duration',
+                            dispatch_action: false,
                             label: { type: 'plain_text', text: 'Thời gian nghỉ' },
-                            element: {
+                            element: type === 'full' ? {
                                 type: 'plain_text_input',
                                 action_id: 'update_duration_input',
-                                placeholder: { type: 'plain_text', text: 'Nhập thời gian nghỉ mới (VD: 1h, 30 phút)' },
                                 initial_value: initialDuration
+                            } : {
+                                type: 'static_select',
+                                action_id: 'update_duration_input',
+                                placeholder: { type: 'plain_text', text: 'Chọn khoảng thời gian nghỉ mới' },
+                                options: durationOptions
                             },
                         }
                     ]

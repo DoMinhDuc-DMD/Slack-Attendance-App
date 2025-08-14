@@ -13,7 +13,7 @@ module.exports = (app, db) => {
             const userId = metadata.userId;
             const newDay = view.state.values.new_datepicker.new_datepicker_input.selected_date;
             const newPeriod = view.state.values.new_period.new_period_input.selected_option.value;
-            const newDuration = view.state.values.new_duration.new_duration_input.value || metadata.initialDuration;
+            const newDuration = metadata.initialDuration || view.state.values.new_duration.new_duration_input.selected_option.value;
             const pendingTime = dayjs().format(DATETIME_FORMAT);
 
             const durationValue = calculateDuration(newDuration);

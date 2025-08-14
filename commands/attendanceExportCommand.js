@@ -1,7 +1,6 @@
 const dayjs = require("dayjs");
 
 module.exports = (app) => {
-    // Thống kê dùng command của slack và trả lời trong channel thống kê
     app.command('/xuatdulieu', async ({ command, ack, client }) => {
         await ack();
 
@@ -85,7 +84,7 @@ module.exports = (app) => {
                 }
             });
         } catch (error) {
-            console.error("Error opening modal:", error);
+            console.error("Error handling export attendance:", error);
         }
     });
 }

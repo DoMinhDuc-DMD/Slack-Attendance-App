@@ -6,6 +6,9 @@ const { userToRequest } = require("../services/formatVariables");
 module.exports = (app, db) => {
     app.message(async ({ message, client }) => {
         try {
+            if (message.subtype && message.subtype !== 'bot_message') return;
+            if (!message.text) return;
+
             const regex = /<@(\w+)>\s*(?:em\s+)?xin phép nghỉ\s*(.+?)?\s*(đầu|cuối|cả)\s*(buổi sáng|buổi chiều|ngày)/i;
 
             const match = message?.text.toLowerCase().match(regex);

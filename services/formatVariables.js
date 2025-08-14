@@ -1,6 +1,7 @@
 const userToRequest = process.env.USER_TO_REQUEST;
 const requestChannel = process.env.REQUEST_CHANNEL;
 const statisticChannel = process.env.STATISTIC_CHANNEL;
+const exportChannel = process.env.EXPORT_CHANNEL;
 
 function formatPeriod(period) {
     const map = {
@@ -34,6 +35,7 @@ module.exports = {
     userToRequest,
     requestChannel,
     statisticChannel,
+    exportChannel,
     formatPeriod,
     formatDuration,
 };

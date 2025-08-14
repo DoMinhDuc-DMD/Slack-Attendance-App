@@ -1,3 +1,10 @@
+const durationMapOptions = {
+    '30 phút': { leaveDuration: '30 phút' },
+    '1 giờ': { leaveDuration: '1 giờ' },
+    '1 giờ 30 phút': { leaveDuration: '1 giờ 30 phút' },
+    '2 giờ': { leaveDuration: '2 giờ' },
+};
+
 const periodMapOptions = {
     'Đầu buổi sáng': { leavePeriod: 'start_morning' },
     'Cuối buổi sáng': { leavePeriod: 'end_morning' },
@@ -94,4 +101,4 @@ async function disableLeaveRequest(db, receiveTime, userId, leaveDay, period, ti
     }
 }
 
-module.exports = { periodMapOptions, getLabelFromValue, capitalizeFirstLetter, calculateDuration, responseMessage, checkExistRequest, insertLeaveRequest, confirmLeaveRequest, disableLeaveRequest }
+module.exports = { durationMapOptions, periodMapOptions, getLabelFromValue, capitalizeFirstLetter, calculateDuration, responseMessage, checkExistRequest, insertLeaveRequest, confirmLeaveRequest, disableLeaveRequest }
