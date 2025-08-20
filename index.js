@@ -1,1 +1,2 @@
-module.exports = require("./app.js");
+require('./app');
+require('./server');

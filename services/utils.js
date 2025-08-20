@@ -23,6 +23,35 @@ function capitalizeFirstLetter(period) {
     return period.charAt(0).toUpperCase() + period.slice(1);
 }
 
+function formatPeriod(period) {
+    const map = {
+        start_morning: "Đầu buổi sáng",
+        end_morning: "Cuối buổi sáng",
+        full_morning: "Cả buổi sáng",
+        start_afternoon: "Đầu buổi chiều",
+        end_afternoon: "Cuối buổi chiều",
+        full_afternoon: "Cả buổi chiều",
+        full_day: "Cả ngày",
+    };
+    return map[period] || period;
+}
+
+function formatDuration(duration) {
+    if (duration < 1) {
+        return `${Math.round(duration * 60)} phút`;
+    }
+
+    const hours = Math.floor(duration);
+    const minutes = Math.round((duration - hours) * 60);
+
+    let result = '';
+    if (hours > 0) result += `${hours} giờ`;
+    if (minutes > 0) result += ` ${minutes} phút`;
+
+    return result.trim();
+}
+
+
 function calculateDuration(newDuration) {
     const regex = /(?:(\d+)\s*(?:giờ|h))|(?:(\d+)\s*phút)/gi;
     let match;
@@ -57,48 +86,66 @@ async function responseMessage(client, channelId, text, threadTs = null) {
     return await client.chat.postMessage(payload);
 }
 
-async function checkExistRequest(db, userId, leaveDay, leavePeriod) {
+async function getInfoToRequest(db, teamId) {
+    return await db.execute(`SELECT attendance_admin_id, attendance_channel_id from workspace where team_id = ?`, [teamId]);
+}
+
+async function checkExistRequest(db, workspaceId, userId, leaveDay, leavePeriod) {
     return await db.execute(
         `SELECT * FROM leave_requests 
-            WHERE user_id = ? AND leave_day = ? AND leave_period LIKE ?`,
-        [userId, leaveDay, `%${leavePeriod.split("_")[1]}%`]
+            WHERE workspace_id = ? AND user_id = ? AND leave_day = ? AND leave_period LIKE ?`,
+        [workspaceId, userId, leaveDay, `%${leavePeriod.split("_")[1]}%`]
     );
 }
 
-async function insertLeaveRequest(db, userId, leaveDay, leavePeriod, leaveDuration, timestamp, receiveTime) {
+async function insertLeaveRequest(db, workspaceId, userId, leaveDay, leavePeriod, leaveDuration, timestamp, receiveTime) {
     await db.execute(
         `INSERT INTO leave_requests 
-            (user_id, leave_day, leave_period, leave_duration, timestamp, request_status, created_at, updated_at) 
-            VALUES (?, ?, ?, ?, ?, ?, ?, ?)`,
-        [userId, leaveDay, leavePeriod, leaveDuration, timestamp, 'pending', receiveTime, receiveTime]
+            (workspace_id, user_id, leave_day, leave_period, leave_duration, timestamp, request_status, created_at, updated_at) 
+            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+        [workspaceId, userId, leaveDay, leavePeriod, leaveDuration, timestamp, 'pending', receiveTime, receiveTime]
     );
 }
 
-async function confirmLeaveRequest(db, receiveTime, userId, timestamp) {
+async function confirmLeaveRequest(db, workspaceId, receiveTime, userId, timestamp) {
     await db.execute(
         `UPDATE leave_requests
             SET request_status = ?, updated_at = ?
-            WHERE user_id = ? AND timestamp = ?`,
-        ['confirmed', receiveTime, userId, timestamp]
+            WHERE workspace_id = ? AND user_id = ? AND timestamp = ?`,
+        ['confirmed', receiveTime, workspaceId, userId, timestamp]
     );
 }
 
-async function disableLeaveRequest(db, receiveTime, userId, leaveDay, period, timestamp) {
+async function disableLeaveRequest(db, workspaceId, receiveTime, userId, leaveDay, period, timestamp) {
     if (period === 'day') {
         await db.execute(
             `UPDATE leave_requests 
                 SET request_status = ?, updated_at = ?
-                WHERE user_id = ? AND leave_day = ? AND timestamp <> ?`,
-            ['disabled', receiveTime, userId, leaveDay, timestamp]
+                WHERE workspace_id = ? AND user_id = ? AND leave_day = ? AND timestamp <> ?`,
+            ['disabled', receiveTime, workspaceId, userId, leaveDay, timestamp]
         );
     } else {
         await db.execute(
             `UPDATE leave_requests 
                 SET request_status = ?, updated_at = ?
-                WHERE user_id = ? AND leave_day = ? AND leave_period LIKE ? AND timestamp <> ?`,
-            ['disabled', receiveTime, userId, leaveDay, `%${period}%`, timestamp]
+                WHERE workspace_id = ? AND user_id = ? AND leave_day = ? AND leave_period LIKE ? AND timestamp <> ?`,
+            ['disabled', receiveTime, workspaceId, userId, leaveDay, `%${period}%`, timestamp]
         );
     }
 }
 
-module.exports = { durationMapOptions, periodMapOptions, getLabelFromValue, capitalizeFirstLetter, calculateDuration, responseMessage, checkExistRequest, insertLeaveRequest, confirmLeaveRequest, disableLeaveRequest }
+module.exports = {
+    durationMapOptions,
+    periodMapOptions,
+    getLabelFromValue,
+    capitalizeFirstLetter,
+    formatPeriod,
+    formatDuration,
+    calculateDuration,
+    responseMessage,
+    getInfoToRequest,
+    checkExistRequest,
+    insertLeaveRequest,
+    confirmLeaveRequest,
+    disableLeaveRequest
+}

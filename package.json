@@ -2,10 +2,13 @@
   "dependencies": {
     "@slack/bolt": "^4.4.0",
     "@slack/web-api": "^7.9.3",
+    "axios": "^1.11.0",
     "dayjs": "^1.11.13",
     "dotenv": "^17.0.1",
     "exceljs": "^4.4.0",
-    "mysql2": "^3.14.2"
+    "express": "^5.1.0",
+    "mysql2": "^3.14.3",
+    "ngrok": "^5.0.0-beta.2"
   },
   "name": "slackapp",
   "version": "0.0.0",

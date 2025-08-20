@@ -6,7 +6,7 @@ services:
     restart: always
     environment:
       MYSQL_ROOT_PASSWORD: password
-      MYSQL_DATABASE: slackbot
+      MYSQL_DATABASE: leavebot
       MYSQL_USER: slack
       MYSQL_PASSWORD: password
     ports: 
@@ -26,13 +26,13 @@ services:
       db:
         condition: service_healthy
     environment:
-      SLACK_BOT_TOKEN: ${SLACK_OAUTH_TOKEN}
-      SLACK_SIGNING_SECRET: ${SIGNING_SECRET}
-      SLACK_APP_TOKEN: ${SLACK_APP_TOKEN}
+      BOT_TOKEN: ${OAUTH_TOKEN}
+      SIGNING_SECRET: ${SIGNING_SECRET}
+      APP_TOKEN: ${APP_TOKEN}
       DB_HOST: db
       DB_USER: slack
       DB_PASSWORD: password
-      DB_NAME: slackbot
+      DB_NAME: leavebot
       DB_PORT: 3306
     ports:
       - "3000:3000"
