@@ -48,7 +48,7 @@ module.exports = (app, db) => {
 
             const formattedDate = dayjs(day, DMY_FORMAT).format(YMD_FORMAT);
 
-            const [oldTimestamp] = await db.execute(`
+            const [oldTimestamp] = db.execute(`
                 SELECT timestamp FROM leave_requests WHERE workspace_id = ? AND user_id = ? AND leave_day = ? AND leave_period = ?`,
                 [workspaceId, userId, formattedDate, periodMapOptions[period].leavePeriod]
             );
