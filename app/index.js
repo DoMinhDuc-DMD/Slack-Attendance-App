@@ -12,7 +12,7 @@ const app = new App({
     appToken: process.env.APP_TOKEN,
     signingSecret: process.env.SIGNING_SECRET,
     authorize: async ({ teamId }) => {
-        const db = await DBConnection();
+        const db = DBConnection();
         const [rows] = await db.query('SELECT access_token, bot_user_id FROM workspace WHERE team_id = ?', [teamId]);
 
         if (rows.length === 0) {
@@ -28,7 +28,7 @@ const app = new App({
 
 (async () => {
     try {
-        const db = await DBConnection();
+        const db = DBConnection();
 
         registerCommands(app, db);
         registerEvents(app, db);
