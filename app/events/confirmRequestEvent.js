@@ -8,7 +8,7 @@ module.exports = (app, db) => {
             const confirmTime = dayjs().format(DATETIME_FORMAT);
             const workspaceId = body.team_id;
 
-            const [matchedRequest] = db.execute(`SELECT * FROM leave_requests WHERE workspace_id = ? AND timestamp = ?`, [workspaceId, event.item.ts]);
+            const [matchedRequest] = await db.execute(`SELECT * FROM leave_requests WHERE workspace_id = ? AND timestamp = ?`, [workspaceId, event.item.ts]);
 
             const [infoToRequest] = await getInfoToRequest(db, workspaceId);
             const adminId = infoToRequest[0].attendance_admin_id;

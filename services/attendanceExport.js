@@ -1,6 +1,6 @@
 async function attendanceExport(db, workspaceId, userId, month, year) {
     try {
-        const [userLeaves] = db.execute(`SELECT * FROM leave_requests 
+        const [userLeaves] = await db.execute(`SELECT * FROM leave_requests 
             WHERE workspace_id = ? AND user_id = ? AND MONTH(leave_day) = ? AND YEAR(leave_day) = ? AND request_status = ? ORDER BY leave_day`,
             [workspaceId, userId, month, year, 'confirmed']);
 

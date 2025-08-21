@@ -87,11 +87,11 @@ async function responseMessage(client, channelId, text, threadTs = null) {
 }
 
 async function getInfoToRequest(db, teamId) {
-    return db.execute(`SELECT attendance_admin_id, attendance_channel_id from workspace where team_id = ?`, [teamId]);
+    return await db.execute(`SELECT attendance_admin_id, attendance_channel_id from workspace where team_id = ?`, [teamId]);
 }
 
 async function checkExistRequest(db, workspaceId, userId, leaveDay, leavePeriod) {
-    return db.execute(
+    return await db.execute(
         `SELECT * FROM leave_requests 
             WHERE workspace_id = ? AND user_id = ? AND leave_day = ? AND leave_period LIKE ?`,
         [workspaceId, userId, leaveDay, `%${leavePeriod.split("_")[1]}%`]
@@ -99,7 +99,7 @@ async function checkExistRequest(db, workspaceId, userId, leaveDay, leavePeriod)
 }
 
 async function insertLeaveRequest(db, workspaceId, userId, leaveDay, leavePeriod, leaveDuration, timestamp, receiveTime) {
-    db.execute(
+    await db.execute(
         `INSERT INTO leave_requests 
             (workspace_id, user_id, leave_day, leave_period, leave_duration, timestamp, request_status, created_at, updated_at) 
             VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)`,
@@ -108,7 +108,7 @@ async function insertLeaveRequest(db, workspaceId, userId, leaveDay, leavePeriod
 }
 
 async function confirmLeaveRequest(db, workspaceId, receiveTime, userId, timestamp) {
-    db.execute(
+    await db.execute(
         `UPDATE leave_requests
             SET request_status = ?, updated_at = ?
             WHERE workspace_id = ? AND user_id = ? AND timestamp = ?`,
@@ -118,14 +118,14 @@ async function confirmLeaveRequest(db, workspaceId, receiveTime, userId, timesta
 
 async function disableLeaveRequest(db, workspaceId, receiveTime, userId, leaveDay, period, timestamp) {
     if (period === 'day') {
-        db.execute(
+        await db.execute(
             `UPDATE leave_requests 
                 SET request_status = ?, updated_at = ?
                 WHERE workspace_id = ? AND user_id = ? AND leave_day = ? AND timestamp <> ?`,
             ['disabled', receiveTime, workspaceId, userId, leaveDay, timestamp]
         );
     } else {
-        db.execute(
+        await db.execute(
             `UPDATE leave_requests 
                 SET request_status = ?, updated_at = ?
                 WHERE workspace_id = ? AND user_id = ? AND leave_day = ? AND leave_period LIKE ? AND timestamp <> ?`,

@@ -4,7 +4,7 @@ const { getLabelFromValue, periodMapOptions, responseMessage, durationMapOptions
 
 module.exports = (app, db) => {
     const getRequestOptions = async (workspaceId, userId) => {
-        const [requestList] = db.execute(`SELECT * FROM leave_requests WHERE workspace_id = ? AND user_id = ? AND request_status != ?`, [workspaceId, userId, 'disabled']);
+        const [requestList] = await db.execute(`SELECT * FROM leave_requests WHERE workspace_id = ? AND user_id = ? AND request_status != ?`, [workspaceId, userId, 'disabled']);
         const requestListFormat = requestList.map(req => ({
             label: `${getLabelFromValue(req.leave_period)} ${dayjs(req.leave_day).format(DMY_FORMAT)}`,
             value: `${getLabelFromValue(req.leave_period)} ${dayjs(req.leave_day).format(DMY_FORMAT)}`

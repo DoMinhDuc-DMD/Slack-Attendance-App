@@ -12,8 +12,8 @@ const app = new App({
     appToken: process.env.APP_TOKEN,
     signingSecret: process.env.SIGNING_SECRET,
     authorize: async ({ teamId }) => {
-        const db = DBConnection();
-        const [rows] = db.query('SELECT access_token, bot_user_id FROM workspace WHERE team_id = ?', [teamId]);
+        const db = await DBConnection();
+        const [rows] = await db.query('SELECT access_token, bot_user_id FROM workspace WHERE team_id = ?', [teamId]);
 
         if (rows.length === 0) {
             throw new Error('Not found workspace!');
@@ -28,7 +28,7 @@ const app = new App({
 
 (async () => {
     try {
-        const db = DBConnection();
+        const db = await DBConnection();
 
         registerCommands(app, db);
         registerEvents(app, db);
