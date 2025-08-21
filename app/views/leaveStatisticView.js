@@ -8,6 +8,7 @@ module.exports = (app, db) => {
         await ack();
 
         const requesterId = body.user.id;
+        const workspaceId = body.team.id;
 
         const userList = view.state.values.user_block.user_select.selected_options;
         const month = parseInt(view.state.values.month_block.month_select.selected_option.value);
@@ -15,7 +16,7 @@ module.exports = (app, db) => {
 
         for (const user of userList) {
             const userId = user.value;
-            const stats = await leaveStatistic(db, userId, month, year);
+            const stats = await leaveStatistic(db, workspaceId, userId, month, year);
 
             let message = '';
 

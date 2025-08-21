@@ -10,6 +10,7 @@ module.exports = (app, db) => {
             const metadata = JSON.parse(view.private_metadata)
 
             const userId = metadata.userId;
+            const workspaceId = metadata.workspaceId;
 
             const updateRequest = view.state.values.update_request.update_request_input.selected_option.value;
             const updatePeriod = view.state.values.update_period.update_period_input.selected_option.value;
@@ -49,7 +50,7 @@ module.exports = (app, db) => {
 
             const [oldTimestamp] = await db.execute(`
                 SELECT timestamp FROM leave_requests WHERE workspace_id = ? AND user_id = ? AND leave_day = ? AND leave_period = ?`,
-                [1, userId, formattedDate, periodMapOptions[period].leavePeriod]
+                [workspaceId, userId, formattedDate, periodMapOptions[period].leavePeriod]
             );
 
             if (!oldTimestamp.length) {

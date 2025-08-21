@@ -1,7 +1,7 @@
 CREATE TABLE workspace (
     id INT AUTO_INCREMENT PRIMARY KEY,
-    team_id VARCHAR(150) NOT NULL UNIQUE,
-    team_name VARCHAR(150),
+    team_id VARCHAR(30) NOT NULL UNIQUE,
+    team_name VARCHAR(30),
     access_token TEXT NOT NULL,
     bot_user_id VARCHAR(150) NOT NULL,
     attendance_admin_id VARCHAR(30),
@@ -12,7 +12,7 @@ CREATE TABLE workspace (
 
 CREATE TABLE leave_requests (
     id INT AUTO_INCREMENT PRIMARY KEY,
-    workspace_id INT NOT NULL,
+    workspace_id VARCHAR(30) NOT NULL,
     user_id VARCHAR(30) NOT NULL,
     leave_day DATE NOT NULL,
     leave_period VARCHAR(30) NOT NULL,
@@ -21,5 +21,5 @@ CREATE TABLE leave_requests (
     request_status ENUM('pending', 'confirmed', 'disabled') NOT NULL DEFAULT 'pending',
     created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
     updated_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
-    FOREIGN KEY (workspace_id) REFERENCES workspace(id) ON DELETE CASCADE
+    FOREIGN KEY (workspace_id) REFERENCES workspace(team_id) ON DELETE CASCADE
 );

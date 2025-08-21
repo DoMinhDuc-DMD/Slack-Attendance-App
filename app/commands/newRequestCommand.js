@@ -8,6 +8,8 @@ module.exports = (app) => {
 
         try {
             const userId = command.user_id;
+            const workspaceId = command.team_id;
+
             const periodOptions = Object.entries(periodMapOptions).map(([label, value]) => ({
                 text: { type: 'plain_text', text: label },
                 value: value.leavePeriod
@@ -18,7 +20,7 @@ module.exports = (app) => {
                 view: {
                     type: 'modal',
                     callback_id: 'new_request_modal',
-                    private_metadata: JSON.stringify({ userId, initialDuration: "" }),
+                    private_metadata: JSON.stringify({ userId, workspaceId, initialDuration: "" }),
                     title: { type: 'plain_text', text: 'Xin phép nghỉ' },
                     submit: { type: 'plain_text', text: 'Gửi yêu cầu' },
                     close: { type: 'plain_text', text: 'Hủy' },

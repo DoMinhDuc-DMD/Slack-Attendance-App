@@ -1,6 +1,6 @@
 const { App } = require('@slack/bolt');
 require('dotenv').config();
-const { createDBConnection } = require('../services/createDBConnection');
+const { DBConnection } = require('../services/DBConnection');
 
 const registerCommands = require('./commands');
 const registerEvents = require('./events');
@@ -12,7 +12,7 @@ const app = new App({
     appToken: process.env.APP_TOKEN,
     signingSecret: process.env.SIGNING_SECRET,
     authorize: async ({ teamId }) => {
-        const db = await createDBConnection();
+        const db = await DBConnection();
         const [rows] = await db.query('SELECT access_token, bot_user_id FROM workspace WHERE team_id = ?', [teamId]);
 
         if (rows.length === 0) {
@@ -28,7 +28,7 @@ const app = new App({
 
 (async () => {
     try {
-        const db = await createDBConnection();
+        const db = await DBConnection();
 
         registerCommands(app, db);
         registerEvents(app, db);

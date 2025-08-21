@@ -25,15 +25,8 @@ services:
     depends_on:
       db:
         condition: service_healthy
-    environment:
-      BOT_TOKEN: ${OAUTH_TOKEN}
-      SIGNING_SECRET: ${SIGNING_SECRET}
-      APP_TOKEN: ${APP_TOKEN}
-      DB_HOST: db
-      DB_USER: slack
-      DB_PASSWORD: password
-      DB_NAME: leavebot
-      DB_PORT: 3306
+    env_file:
+      - .env
     ports:
       - "3000:3000"
 

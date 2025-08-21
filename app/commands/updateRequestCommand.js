@@ -3,8 +3,8 @@ const { DMY_FORMAT } = require("../../services/formatDate");
 const { getLabelFromValue, periodMapOptions, responseMessage, durationMapOptions } = require("../../services/utils");
 
 module.exports = (app, db) => {
-    const getRequestOptions = async (userId) => {
-        const [requestList] = await db.execute(`SELECT * FROM leave_requests WHERE workspace_id = ? AND user_id = ? AND request_status != 'disabled'`, [1, userId]);
+    const getRequestOptions = async (workspaceId, userId) => {
+        const [requestList] = await db.execute(`SELECT * FROM leave_requests WHERE workspace_id = ? AND user_id = ? AND request_status != ?`, [workspaceId, userId, 'disabled']);
         const requestListFormat = requestList.map(req => ({
             label: `${getLabelFromValue(req.leave_period)} ${dayjs(req.leave_day).format(DMY_FORMAT)}`,
             value: `${getLabelFromValue(req.leave_period)} ${dayjs(req.leave_day).format(DMY_FORMAT)}`
@@ -23,8 +23,10 @@ module.exports = (app, db) => {
     app.command('/capnhatnghi', async ({ command, ack, client }) => {
         await ack();
         try {
-            const userId = command.user_id
-            const requestOptions = await getRequestOptions(userId);
+            const userId = command.user_id;
+            const workspaceId = command.team_id;
+            const requestOptions = await getRequestOptions(workspaceId, userId);
+
             if (requestOptions.length === 0) {
                 return await responseMessage(client, userId, `Bạn chưa có yêu cầu xin nghỉ nào để cập nhật. Hãy đăng ký nghỉ trước!`);
             }
@@ -34,7 +36,7 @@ module.exports = (app, db) => {
                 view: {
                     type: 'modal',
                     callback_id: 'update_request_modal',
-                    private_metadata: userId,
+                    private_metadata: JSON.stringify({ workspaceId, userId }),
                     title: { type: 'plain_text', text: 'Cập nhật yêu cầu nghỉ' },
                     submit: { type: 'plain_text', text: 'Gửi yêu cầu' },
                     close: { type: 'plain_text', text: 'Hủy' },
@@ -62,8 +64,8 @@ module.exports = (app, db) => {
     app.action('update_request_input', async ({ body, ack, client }) => {
         await ack();
         try {
-            const userId = body.user.id;
-            const requestOptions = await getRequestOptions(userId);
+            const { workspaceId, userId } = JSON.parse(body.view.private_metadata);
+            const requestOptions = await getRequestOptions(workspaceId, userId);
             const periodOptions = getPeriodOptions();
 
             const selectedRequest = body.actions[0].selected_option.value;
@@ -79,10 +81,7 @@ module.exports = (app, db) => {
                 view: {
                     type: 'modal',
                     callback_id: 'update_request_modal',
-                    private_metadata: JSON.stringify({
-                        userId,
-                        updatePeriodOptions
-                    }),
+                    private_metadata: JSON.stringify({ workspaceId, userId, updatePeriodOptions }),
                     title: { type: 'plain_text', text: 'Cập nhật yêu cầu nghỉ' },
                     submit: { type: 'plain_text', text: 'Gửi yêu cầu' },
                     close: { type: 'plain_text', text: 'Hủy' },
@@ -122,12 +121,8 @@ module.exports = (app, db) => {
     app.action('update_period_input', async ({ body, ack, client }) => {
         await ack();
         try {
-            const metadata = JSON.parse(body.view.private_metadata);
-
-            const userId = metadata.userId;
-            const updatePeriodOptions = metadata.updatePeriodOptions;
-
-            const requestOptions = await getRequestOptions(userId);
+            const { workspaceId, userId, updatePeriodOptions } = JSON.parse(body.view.private_metadata);
+            const requestOptions = await getRequestOptions(workspaceId, userId);
 
             const selectedPeriod = body.actions[0].selected_option.value;
             const [type] = selectedPeriod.split('_');
@@ -144,7 +139,7 @@ module.exports = (app, db) => {
                 view: {
                     type: 'modal',
                     callback_id: 'update_request_modal',
-                    private_metadata: JSON.stringify({ ...metadata, initialDuration }),
+                    private_metadata: JSON.stringify({ workspaceId, userId, updatePeriodOptions, initialDuration }),
                     title: { type: 'plain_text', text: 'Cập nhật yêu cầu nghỉ' },
                     submit: { type: 'plain_text', text: 'Gửi yêu cầu' },
                     close: { type: 'plain_text', text: 'Hủy' },

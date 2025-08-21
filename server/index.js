@@ -1,6 +1,6 @@
 const express = require('express');
 const axios = require('axios');
-const { createDBConnection } = require('../services/createDBConnection');
+const { DBConnection } = require('../services/DBConnection')
 require('dotenv').config();
 
 const app = express();
@@ -31,7 +31,7 @@ app.get('/slack/oauth_redirect', async (req, res) => {
         const accessToken = data.access_token;
         const botUserId = data.bot_user_id;
 
-        const db = await createDBConnection();
+        const db = await DBConnection();
         await db.query(`
             INSERT INTO workspace (team_id, team_name, access_token, bot_user_id) VALUES (?, ?, ?, ?) 
             ON DUPLICATE KEY UPDATE 

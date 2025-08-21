@@ -13,6 +13,7 @@ module.exports = (app, db) => {
             const match = message?.text.toLowerCase().match(regex);
             if (!match) return;
 
+            const workspaceId = message.team;
             const leaveDay = dayjs().format(YMD_FORMAT);
             const threadTs = message.ts || message.thread_ts;
             const receiveTime = dayjs(parseFloat(message.ts) * 1000).format(DATETIME_FORMAT);
@@ -37,7 +38,7 @@ module.exports = (app, db) => {
                 durationValue = calculateDuration(newDuration);
             }
 
-            const [checkExist] = await checkExistRequest(db, 1, message.user, leaveDay, periodValue);
+            const [checkExist] = await checkExistRequest(db, workspaceId, message.user, leaveDay, periodValue);
             if (checkExist.length > 0) {
                 return await responseMessage(
                     client,
@@ -46,7 +47,7 @@ module.exports = (app, db) => {
                 );
             }
 
-            await insertLeaveRequest(db, 1, message.user, leaveDay, periodValue, durationValue, threadTs, receiveTime);
+            await insertLeaveRequest(db, workspaceId, message.user, leaveDay, periodValue, durationValue, threadTs, receiveTime);
         } catch (error) {
             console.error("Error handling leave request:", error);
         }

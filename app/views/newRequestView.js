@@ -10,6 +10,8 @@ module.exports = (app, db) => {
             const metadata = JSON.parse(view.private_metadata);
 
             const userId = metadata.userId;
+            const workspaceId = metadata.workspaceId;
+
             const newDay = view.state.values.new_datepicker.new_datepicker_input.selected_date;
             const newPeriod = view.state.values.new_period.new_period_input.selected_option.value;
             const newDuration = metadata.initialDuration || view.state.values.new_duration.new_duration_input.selected_option.value;
@@ -22,7 +24,7 @@ module.exports = (app, db) => {
             const adminId = infoToRequest[0].attendance_admin_id;
             const channelId = infoToRequest[0].attendance_channel_id;
 
-            const [checkExist] = await checkExistRequest(db, 1, userId, newDay, newPeriod);
+            const [checkExist] = await checkExistRequest(db, workspaceId, userId, newDay, newPeriod);
             if (checkExist.length > 0) {
                 return await responseMessage(
                     client,
@@ -37,7 +39,7 @@ module.exports = (app, db) => {
                 `<@${adminId}> <@${userId}> xin nghỉ ${!newPeriod.includes('full') ? `${newDuration} ` : ''}${localizedPeriod} ${dayjs(newDay).format(DMY_FORMAT)}`
             );
 
-            await insertLeaveRequest(db, 1, userId, newDay, newPeriod, durationValue, request.ts, pendingTime);
+            await insertLeaveRequest(db, workspaceId, userId, newDay, newPeriod, durationValue, request.ts, pendingTime);
         } catch (error) {
             console.error("Error handling leave request modal submission:", error);
         }

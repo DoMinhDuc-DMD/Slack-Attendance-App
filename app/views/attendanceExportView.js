@@ -8,6 +8,8 @@ module.exports = (app, db) => {
         await ack();
         try {
             const requesterId = body.user.id;
+            const workspaceId = body.team.id;
+
             const im = await client.conversations.open({ users: requesterId });
             const dmChannelId = im.channel.id;
 
@@ -60,7 +62,7 @@ module.exports = (app, db) => {
                 let totalLeaveHours = 0;
                 let totalWorkDays = 0;
 
-                const attendanceData = await attendanceExport(db, userId, month, year);
+                const attendanceData = await attendanceExport(db, workspaceId, userId, month, year);
 
                 for (let day = 1; day <= totalDays; day++) {
                     const current = dayjs(`${year}-${month}-${String(day).padStart(2, '0')}`);
