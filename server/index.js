@@ -1,9 +1,11 @@
 const express = require('express');
+const ngrok = require('ngrok');
 const axios = require('axios');
 const { DBConnection } = require('../services/DBConnection')
 require('dotenv').config();
 
 const app = express();
+const PORT = 3000;
 
 app.get('/slack/oauth_redirect', async (req, res) => {
     const code = req.query.code;
@@ -48,6 +50,7 @@ app.get('/slack/oauth_redirect', async (req, res) => {
     }
 });
 
-app.listen(3000, () => {
-    console.log('OAuth is running on port 3000.');
+app.listen(PORT, async () => {
+    const url = await ngrok.connect(PORT);
+    console.log(`OAuth is running on ${url}.`);
 });
