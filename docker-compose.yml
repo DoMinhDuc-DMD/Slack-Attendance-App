@@ -25,10 +25,24 @@ services:
     depends_on:
       db:
         condition: service_healthy
-    env_file:
-      - .env
+    environment:
+      SIGNING_SECRET: ${SIGNING_SECRET}
+      APP_TOKEN: ${APP_TOKEN}
+      DB_HOST: db
+      DB_USER: slack
+      DB_PASSWORD: password
+      DB_NAME: leavebot
+      DB_PORT: 3306
     ports:
       - "3000:3000"
+
+  ngrok:
+    image: ngrok/ngrok:3
+    command: ["http", "app:3000", "--log=stdout"]
+    ports:
+      - "4040:4040"
+    environment:
+      NGROK_AUTHTOKEN: "2zP1AiSfxHA11IGRREHSrLnfsci_4tQgTTjWho8sdNVuLTrhb"
 
 volumes:
   db_data:

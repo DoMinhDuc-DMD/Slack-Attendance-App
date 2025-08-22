@@ -21,5 +21,5 @@ CREATE TABLE leave_requests (
     request_status ENUM('pending', 'confirmed', 'disabled') NOT NULL DEFAULT 'pending',
     created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
     updated_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
-    FOREIGN KEY (workspace_id) REFERENCES workspace(team_id) ON DELETE CASCADE
+    FOREIGN KEY (workspace_id) REFERENCES workspace(team_id) ON UPDATE CASCADE ON DELETE CASCADE
 );

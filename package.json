@@ -12,7 +12,7 @@
   },
   "name": "slackapp",
   "version": "0.0.0",
-  "description": "Aime listener bot",
+  "description": "Slack Attendance App",
   "main": "index.js",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",

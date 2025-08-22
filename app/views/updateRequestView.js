@@ -64,7 +64,7 @@ module.exports = (app, db) => {
                 oldTimestamp[0].timestamp
             );
 
-            await insertLeaveRequest(db, 1, userId, formattedDate, updatePeriod, duration, request.ts, updateTime);
+            await insertLeaveRequest(db, workspaceId, userId, formattedDate, updatePeriod, duration, request.ts, updateTime);
         } catch (error) {
             console.error("Error handling leave request modal submission:", error);
         }
