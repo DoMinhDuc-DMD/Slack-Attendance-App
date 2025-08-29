@@ -5,6 +5,7 @@ module.exports = (app) => {
         await ack();
 
         try {
+            const currentMonth = dayjs().month() + 1;
             const currentYear = dayjs().year();
 
             const userList = await client.users.list();
@@ -60,10 +61,7 @@ module.exports = (app) => {
                                 type: "static_select",
                                 action_id: "month_select",
                                 options: monthOptions,
-                                placeholder: {
-                                    type: 'plain_text',
-                                    text: 'Chọn tháng'
-                                }
+                                initial_option: monthOptions.find(option => option.value === currentMonth.toString())
                             }
                         },
                         {
@@ -74,10 +72,7 @@ module.exports = (app) => {
                                 type: "static_select",
                                 action_id: "year_select",
                                 options: yearOptions,
-                                placeholder: {
-                                    type: 'plain_text',
-                                    text: 'Chọn năm'
-                                }
+                                initial_option: yearOptions.find(option => option.value === currentYear.toString())
                             }
                         }
                     ]

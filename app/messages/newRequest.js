@@ -8,7 +8,7 @@ module.exports = (app, db) => {
             if (message.subtype && message.subtype !== 'bot_message') return;
             if (!message.text) return;
 
-            const regex = /<@(\w+)>\s*(?:em\s+)?xin phép nghỉ\s*(.+?)?\s*(đầu|cuối|cả)\s*(buổi sáng|buổi chiều|ngày)/i;
+            const regex = /<@(\w+)>\s*(?:em\s+)?xin phép nghỉ\s*(.+?)?\s*(đầu|cuối|cả)\s*((?:buổi)?\s*sáng|(?:buổi)?\s*chiều|ngày)/i;
 
             const match = message?.text.toLowerCase().match(regex);
             if (!match) return;
@@ -20,12 +20,14 @@ module.exports = (app, db) => {
 
             const mentionedUser = match[1];
             const [infoToRequest] = await getInfoToRequest(db, message.team);
-            const adminId = infoToRequest[0].attendance_admin_id;
+            const adminId = infoToRequest[0].admin_id;
             if (mentionedUser !== adminId.toLowerCase()) return;
 
             const newDuration = match[2] || '';
-            const part = match[3]?.toLowerCase() || '';
-            const timeOfDay = match[4]?.toLowerCase();
+            const part = match[3].toLowerCase() || '';
+            let timeOfDay = match[4].trim().toLowerCase();
+
+            if (!timeOfDay.includes('buổi') && (timeOfDay === 'sáng' || timeOfDay === 'chiều')) timeOfDay = `buổi ${timeOfDay}`;
 
             const period = (part + ' ' + timeOfDay).trim();
 

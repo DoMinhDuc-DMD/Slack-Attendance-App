@@ -5,6 +5,7 @@ module.exports = (app) => {
         await ack();
 
         try {
+            const currentMonth = dayjs().month() + 1;
             const currentYear = dayjs().year();
 
             const userList = await client.users.list();
@@ -21,7 +22,7 @@ module.exports = (app) => {
                     value: month.toString()
                 };
             });
-            const yearOptions = Array.from({ length: 3 }, (_, i) => {
+            const yearOptions = Array.from({ length: 5 }, (_, i) => {
                 const year = currentYear - i;
                 return {
                     text: { type: "plain_text", text: `${year}` },
@@ -46,10 +47,7 @@ module.exports = (app) => {
                                 type: "multi_static_select",
                                 action_id: "user_select",
                                 options: userOptions,
-                                placeholder: {
-                                    type: 'plain_text',
-                                    text: 'Chọn nhân viên'
-                                }
+                                placeholder: { type: 'plain_text', text: 'Chọn nhân viên' }
                             }
                         },
                         {
@@ -60,10 +58,7 @@ module.exports = (app) => {
                                 type: "static_select",
                                 action_id: "month_select",
                                 options: monthOptions,
-                                placeholder: {
-                                    type: 'plain_text',
-                                    text: 'Chọn tháng'
-                                }
+                                initial_option: monthOptions.find(option => option.value === currentMonth.toString())
                             }
                         },
                         {
@@ -74,10 +69,7 @@ module.exports = (app) => {
                                 type: "static_select",
                                 action_id: "year_select",
                                 options: yearOptions,
-                                placeholder: {
-                                    type: 'plain_text',
-                                    text: 'Chọn năm'
-                                }
+                                initial_option: yearOptions.find(option => option.value === currentYear.toString())
                             }
                         }
                     ]

@@ -1,7 +1,7 @@
 const dayjs = require("dayjs");
 const ExcelJS = require("exceljs");
-const { attendanceExport } = require("../../services/attendanceExport");
 const { YMD_FORMAT } = require("../../services/formatDate");
+const { attendanceExport } = require("../../services/utils");
 
 module.exports = (app, db) => {
     app.view('export_attendance_modal', async ({ ack, view, client, body }) => {
@@ -66,17 +66,21 @@ module.exports = (app, db) => {
 
                 for (let day = 1; day <= totalDays; day++) {
                     const current = dayjs(`${year}-${month}-${String(day).padStart(2, '0')}`);
-                    const leaveRecord = attendanceData.find(data => dayjs(data.leave_day).format(YMD_FORMAT) === current.format(YMD_FORMAT));
+                    const [leaveRecord] = attendanceData.filter(data => dayjs(data.leave_day).format(YMD_FORMAT) === current.format(YMD_FORMAT));
 
                     if (leaveRecord) {
-                        totalWorkHours += 8 - leaveRecord.leave_duration;
-                        totalLeaveHours += leaveRecord.leave_duration / 8;
-                        const duration = (8 - leaveRecord.leave_duration) / 8;
+                        const totalLeaveHoursInDay = leaveRecord.reduce((sum, record) => sum + record.leave_duration, 0);
+                        const workHoursInDay = Math.max(0, 8 - totalLeaveHoursInDay);
 
+                        totalWorkHours += workHoursInDay;
+                        totalLeaveHours += totalLeaveHoursInDay / 8;
+
+                        const duration = (8 - totalLeaveHoursInDay) / 8;
                         if (duration > 0) totalWorkDays += 1;
 
                         detailRow.push(duration);
-                    } else if (!workDays.includes(day) || current.isAfter(today, 'day')) {
+                    }
+                    else if (!workDays.includes(day) || current.isAfter(today, 'day')) {
                         detailRow.push(null);
                     } else {
                         totalWorkHours += 8;

@@ -11,7 +11,7 @@ module.exports = (app, db) => {
             const [matchedRequest] = await db.execute(`SELECT * FROM leave_requests WHERE workspace_id = ? AND timestamp = ?`, [workspaceId, event.item.ts]);
 
             const [infoToRequest] = await getInfoToRequest(db, workspaceId);
-            const adminId = infoToRequest[0].attendance_admin_id;
+            const adminId = infoToRequest[0].admin_id;
 
             if (matchedRequest.length > 0
                 && event.user === adminId

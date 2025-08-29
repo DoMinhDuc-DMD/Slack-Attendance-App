@@ -1,10 +1,3 @@
-const durationMapOptions = {
-    '30 phút': { leaveDuration: '30 phút' },
-    '1 giờ': { leaveDuration: '1 giờ' },
-    '1 giờ 30 phút': { leaveDuration: '1 giờ 30 phút' },
-    '2 giờ': { leaveDuration: '2 giờ' },
-};
-
 const periodMapOptions = {
     'Đầu buổi sáng': { leavePeriod: 'start_morning' },
     'Cuối buổi sáng': { leavePeriod: 'end_morning' },
@@ -13,6 +6,22 @@ const periodMapOptions = {
     'Cuối buổi chiều': { leavePeriod: 'end_afternoon' },
     'Cả buổi chiều': { leavePeriod: 'full_afternoon', leaveDuration: '4 giờ 30 phút' },
     'Cả ngày': { leavePeriod: 'full_day', leaveDuration: '8 giờ' },
+};
+
+const durationMapOptions = {
+    '30 phút': { leaveDuration: '30 phút' },
+    '1 giờ': { leaveDuration: '1 giờ' },
+    '1 giờ 30 phút': { leaveDuration: '1 giờ 30 phút' },
+    '2 giờ': { leaveDuration: '2 giờ' },
+};
+
+const reasonMapOptions = {
+    'Cá nhân': { leaveReason: 'personal' },
+    'Gia đình': { leaveReason: 'family' },
+    'Ốm': { leaveReason: 'sick' },
+    'Hỏng xe': { leaveReason: 'vehicle_issue' },
+    'Tắc đường': { leaveReason: 'traffic' },
+    'Khác': { leaveReason: 'other' },
 };
 
 function getLabelFromValue(val) {
@@ -51,6 +60,18 @@ function formatDuration(duration) {
     return result.trim();
 }
 
+const formatOptions = (map, key) => Object.entries(map).map(([label, value]) => ({
+    text: { type: 'plain_text', text: label },
+    value: value[key]
+}));
+
+const getPeriodInfo = (periodValue) => {
+    const period = Object.values(periodMapOptions).find(p => p.leavePeriod === periodValue);
+    return {
+        isFull: periodValue.includes('full'),
+        fullDurationOption: period ? period.leaveDuration : ""
+    };
+};
 
 function calculateDuration(newDuration) {
     const regex = /(?:(\d+)\s*(?:giờ|h))|(?:(\d+)\s*phút)/gi;
@@ -86,8 +107,15 @@ async function responseMessage(client, channelId, text, threadTs = null) {
     return await client.chat.postMessage(payload);
 }
 
-async function getInfoToRequest(db, teamId) {
-    return await db.execute(`SELECT attendance_admin_id, attendance_channel_id from workspace where team_id = ?`, [teamId]);
+async function getLeaveStatistic(db, workspaceId, userId, month, year) {
+    return await db.execute(
+        `SELECT * FROM leave_requests 
+            WHERE workspace_id = ? AND user_id = ? AND MONTH(leave_day) = ? AND YEAR(leave_day) = ? AND request_status = ?`,
+        [workspaceId, userId, month, year, 'confirmed']);
+}
+
+async function getInfoToRequest(db, workspaceId) {
+    return await db.execute(`SELECT admin_id, channel_id from admins where workspace_id = ?`, [workspaceId]);
 }
 
 async function checkExistRequest(db, workspaceId, userId, leaveDay, leavePeriod) {
@@ -98,12 +126,12 @@ async function checkExistRequest(db, workspaceId, userId, leaveDay, leavePeriod)
     );
 }
 
-async function insertLeaveRequest(db, workspaceId, userId, leaveDay, leavePeriod, leaveDuration, timestamp, receiveTime) {
+async function insertLeaveRequest(db, workspaceId, userId, leaveDay, leavePeriod, leaveDuration, leaveReason, timestamp, receiveTime) {
     await db.execute(
         `INSERT INTO leave_requests 
-            (workspace_id, user_id, leave_day, leave_period, leave_duration, timestamp, request_status, created_at, updated_at) 
-            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)`,
-        [workspaceId, userId, leaveDay, leavePeriod, leaveDuration, timestamp, 'pending', receiveTime, receiveTime]
+            (workspace_id, user_id, leave_day, leave_period, leave_duration, leave_reason, timestamp, request_status, created_at, updated_at) 
+            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+        [workspaceId, userId, leaveDay, leavePeriod, leaveDuration, leaveReason, timestamp, 'pending', receiveTime, receiveTime]
     );
 }
 
@@ -134,18 +162,30 @@ async function disableLeaveRequest(db, workspaceId, receiveTime, userId, leaveDa
     }
 }
 
+async function attendanceExport(db, workspaceId, userId, month, year) {
+    return await db.execute(
+        `SELECT * FROM leave_requests 
+            WHERE workspace_id = ? AND user_id = ? AND MONTH(leave_day) = ? AND YEAR(leave_day) = ? AND request_status = ? ORDER BY leave_day`,
+        [workspaceId, userId, month, year, 'confirmed']);
+}
+
 module.exports = {
     durationMapOptions,
     periodMapOptions,
+    reasonMapOptions,
     getLabelFromValue,
     capitalizeFirstLetter,
     formatPeriod,
     formatDuration,
+    formatOptions,
+    getPeriodInfo,
     calculateDuration,
     responseMessage,
+    getLeaveStatistic,
     getInfoToRequest,
     checkExistRequest,
     insertLeaveRequest,
     confirmLeaveRequest,
-    disableLeaveRequest
+    disableLeaveRequest,
+    attendanceExport
 }

@@ -19,7 +19,7 @@ const app = new App({
     },
     authorize: async ({ teamId }) => {
         const db = await DBConnection();
-        const [rows] = await db.query('SELECT access_token, bot_user_id FROM workspace WHERE team_id = ?', [teamId]);
+        const [rows] = await db.query('SELECT access_token, bot_user_id FROM workspace WHERE workspace_id = ?', [teamId]);
 
         if (rows.length === 0) {
             throw new Error('Not found workspace!');

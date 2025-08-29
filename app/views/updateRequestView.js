@@ -7,19 +7,17 @@ module.exports = (app, db) => {
         await ack();
 
         try {
-            const metadata = JSON.parse(view.private_metadata)
-
-            const userId = metadata.userId;
-            const workspaceId = metadata.workspaceId;
+            const { userId, workspaceId, fullDurationOption } = JSON.parse(view.private_metadata);
 
             const updateRequest = view.state.values.update_request.update_request_input.selected_option.value;
             const updatePeriod = view.state.values.update_period.update_period_input.selected_option.value;
-            const updateDuration = metadata.initialDuration || view.state.values.update_duration.update_duration_input.selected_option.value;
+            const updateDuration = fullDurationOption || view.state.values.update_duration.update_duration_input.selected_option.value;
+
             const updateTime = dayjs().format(DATETIME_FORMAT);
 
             const [infoToRequest] = await getInfoToRequest(db, view.team_id);
-            const adminId = infoToRequest[0].attendance_admin_id;
-            const channelId = infoToRequest[0].attendance_channel_id;
+            const adminId = infoToRequest[0].admin_id;
+            const channelId = infoToRequest[0].channel_id;
 
             const regex = /(?:(\d+)\s*(?:giờ|h))|(?:(\d+)\s*phút)/gi;
             let matchDuration;
@@ -48,23 +46,23 @@ module.exports = (app, db) => {
 
             const formattedDate = dayjs(day, DMY_FORMAT).format(YMD_FORMAT);
 
-            const [oldTimestamp] = await db.execute(`
-                SELECT timestamp FROM leave_requests WHERE workspace_id = ? AND user_id = ? AND leave_day = ? AND leave_period = ?`,
+            const [oldRequest] = await db.execute(`
+                SELECT leave_reason, timestamp FROM leave_requests WHERE workspace_id = ? AND user_id = ? AND leave_day = ? AND leave_period = ?`,
                 [workspaceId, userId, formattedDate, periodMapOptions[period].leavePeriod]
             );
 
-            if (!oldTimestamp.length) {
+            if (!oldRequest.length) {
                 return responseMessage(client, userId, `Không tìm thấy tin nhắn cũ để trả lời (có thể đã bị xóa)!`)
             }
 
             const request = await responseMessage(
                 client,
                 channelId,
-                `<@${adminId}> <@${userId}> cập nhật thời gian nghỉ thành${updatePeriod.includes('full') ? '' : ` ${updateDuration}`} ${getLabelFromValue(updatePeriod).toLowerCase()} ${day}`,
-                oldTimestamp[0].timestamp
+                `<@${adminId}> <@${userId}> cập nhật thời gian nghỉ thành${updatePeriod.includes('full') ? '' : ` ${updateDuration}`} ${getLabelFromValue(updatePeriod).toLowerCase()} ${day}. Lý do: ${oldRequest[0].leave_reason}`,
+                oldRequest[0].timestamp
             );
 
-            await insertLeaveRequest(db, workspaceId, userId, formattedDate, updatePeriod, duration, request.ts, updateTime);
+            await insertLeaveRequest(db, workspaceId, userId, formattedDate, updatePeriod, duration, oldRequest[0].leave_reason, request.ts, updateTime);
         } catch (error) {
             console.error("Error handling leave request modal submission:", error);
         }

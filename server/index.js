@@ -27,22 +27,23 @@ const app = express();
             const data = response.data;
             if (!data.ok) return res.status(500).send('Slack OAuth failed');
 
-            const teamId = data.team.id;
-            const teamName = data.team.name;
+            const workspaceId = data.team.id;
+            const workspaceName = data.team.name;
             const accessToken = data.access_token;
             const botUserId = data.bot_user_id;
+            const adminUserId = data.authed_user.id;
 
             const db = await DBConnection();
             await db.query(`
-                INSERT INTO workspace (team_id, team_name, access_token, bot_user_id) VALUES (?, ?, ?, ?) 
+                INSERT INTO workspace (workspace_id, workspace_name, access_token, bot_user_id, super_admin_id) VALUES (?, ?, ?, ?, ?) 
                 ON DUPLICATE KEY UPDATE 
-                    team_name = VALUES(team_name),
+                    workspace_name = VALUES(workspace_name),
                     access_token = VALUES(access_token), 
                     bot_user_id = VALUES(bot_user_id)`,
-                [teamId, teamName, accessToken, botUserId]
+                [workspaceId, workspaceName, accessToken, botUserId, adminUserId]
             );
 
-            res.send(`App installed to workspace ${teamName}. You can close this tab.`);
+            res.send(`App installed to workspace ${workspaceName}. You can close this tab.`);
         } catch (error) {
             console.error('Error during Slack OAuth:', error);
             res.status(500).send('Internal Server Error');
