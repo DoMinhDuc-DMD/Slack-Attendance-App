@@ -96,6 +96,31 @@ function calculateDuration(newDuration) {
     return parseFloat(duration.toFixed(2));
 }
 
+async function checkCommandMiddleware(db, client, command) {
+    const { user_id, channel_id, channel_name, command: cmd } = command;
+    const conversationInfo = await client.conversations.info({ channel: channel_id });
+    const channel = conversationInfo.channel;
+
+    // Kiểm tra có phải DM với bot không
+    if (!channel.is_im || channel.user !== user_id) {
+        await responseMessage(
+            client, user_id,
+            `Lệnh "${cmd}" không thể sử dụng trong hội thoại ${channel_name}!`
+        );
+        return false;
+    }
+
+    // Người yêu cầu là super admin
+    const [superAdmin] = await db.execute(`SELECT super_admin_id FROM workspace WHERE super_admin_id = ?`, [user_id]);
+    if (superAdmin.length > 0) return true;
+    // Người yêu cầu là admin đã được cấp quyền
+    const [admin] = await db.execute(`SELECT admin_id FROM admins WHERE admin_id = ? AND channel_id = ?`, [user_id, channel_id]);
+    if (admin.length > 0) return true;
+
+    await responseMessage(client, user_id, `Bạn phải là quản trị viên để sử dụng được lệnh "${cmd}"!`);
+    return false;
+}
+
 async function responseMessage(client, channelId, text, threadTs = null) {
     const payload = {
         channel: channelId,
@@ -180,6 +205,7 @@ module.exports = {
     formatOptions,
     getPeriodInfo,
     calculateDuration,
+    checkCommandMiddleware,
     responseMessage,
     getLeaveStatistic,
     getInfoToRequest,

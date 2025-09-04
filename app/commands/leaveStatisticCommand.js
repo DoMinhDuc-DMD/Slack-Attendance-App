@@ -1,8 +1,12 @@
 const dayjs = require("dayjs");
+const { checkCommandMiddleware } = require("../../services/utils");
 
-module.exports = (app) => {
+module.exports = (app, db) => {
     app.command('/thongkenghi', async ({ command, ack, client }) => {
         await ack();
+
+        const checkCommand = await checkCommandMiddleware(db, client, command);
+        if (!checkCommand) return;
 
         try {
             const currentMonth = dayjs().month() + 1;

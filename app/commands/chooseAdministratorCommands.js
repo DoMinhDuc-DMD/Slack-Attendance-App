@@ -1,9 +1,16 @@
 const { buildModal } = require("./blocks/chooseAdministratorBlocks");
+const { checkCommandMiddleware } = require("../../services/utils");
 
-module.exports = (app) => {
+module.exports = (app, db) => {
     app.command('/chonquantri', async ({ command, ack, client }) => {
         await ack();
+
+        const checkCommand = await checkCommandMiddleware(db, client, command);
+        if (!checkCommand) return;
+
         try {
+            const requesterID = command.user_id;
+
             // Channels
             const { channels } = await client.conversations.list();
             const channelOptions = channels
@@ -24,7 +31,7 @@ module.exports = (app) => {
 
             await client.views.open({
                 trigger_id: command.trigger_id,
-                view: buildModal(channelOptions, defaultChannel, userOptions)
+                view: buildModal(channelOptions, defaultChannel, userOptions, requesterID)
             });
         } catch (error) {
             console.error("Error handling choose administrator command:", error);
@@ -34,13 +41,13 @@ module.exports = (app) => {
     app.action('channel_select', async ({ ack, body, client }) => {
         await ack();
         try {
-            const { channelOptions, userOptions } = JSON.parse(body.view.private_metadata);
+            const { channelOptions, userOptions, requesterID } = JSON.parse(body.view.private_metadata);
             const selectedChannel = body.actions[0].selected_option;
 
             await client.views.update({
                 view_id: body.view.id,
                 hash: body.view.hash,
-                view: buildModal(channelOptions, selectedChannel, userOptions)
+                view: buildModal(channelOptions, selectedChannel, userOptions, requesterID)
             });
         } catch (error) {
             console.error("Error handling channel select action:", error);
