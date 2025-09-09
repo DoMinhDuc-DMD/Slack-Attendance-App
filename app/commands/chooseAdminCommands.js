@@ -1,5 +1,6 @@
-const { buildModal } = require("./blocks/chooseAdministratorBlocks");
-const { checkCommandMiddleware } = require("../../services/utils");
+const { buildModal } = require('./blocks/chooseAdminBlocks');
+const { checkCommandMiddleware } = require('../../services/utils');
+const { loadingModal } = require('./blocks/loadingModal');
 
 module.exports = (app, db) => {
     app.command('/chonquantri', async ({ command, ack, client }) => {
@@ -8,9 +9,10 @@ module.exports = (app, db) => {
         const checkCommand = await checkCommandMiddleware(db, client, command);
         if (!checkCommand) return;
 
-        try {
-            const requesterID = command.user_id;
+        const { user_id: requesterID, trigger_id } = command;
+        const loadingView = await loadingModal(client, trigger_id, 'Chọn thông tin quản trị');
 
+        try {
             // Channels
             const { channels } = await client.conversations.list();
             const channelOptions = channels
@@ -29,12 +31,12 @@ module.exports = (app, db) => {
                 .filter(u => members.includes(u.id) && !u.is_bot && u.id !== process.env.SLACK_BOT_ID)
                 .map(u => ({ text: { type: 'plain_text', text: u.real_name || u.name }, value: u.id }));
 
-            await client.views.open({
-                trigger_id: command.trigger_id,
+            await client.views.update({
+                view_id: loadingView.view.id,
                 view: buildModal(channelOptions, defaultChannel, userOptions, requesterID)
             });
         } catch (error) {
-            console.error("Error handling choose administrator command:", error);
+            console.error('Error handling choose admin command:', error);
         }
     });
 
@@ -50,7 +52,7 @@ module.exports = (app, db) => {
                 view: buildModal(channelOptions, selectedChannel, userOptions, requesterID)
             });
         } catch (error) {
-            console.error("Error handling channel select action:", error);
+            console.error('Error handling channel select action:', error);
         }
     });
 }

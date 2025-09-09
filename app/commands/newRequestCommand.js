@@ -1,11 +1,18 @@
-const { defaultOptions, buildBlocks, buildModal } = require("./blocks/newRequestBlocks");
+const { checkCommandMiddleware } = require('../../services/utils');
+const { loadingModal } = require('./blocks/loadingModal');
+const { defaultOptions, buildBlocks, buildModal } = require('./blocks/newRequestBlocks');
 
-module.exports = (app) => {
+module.exports = (app, db) => {
     app.command('/xinnghi', async ({ command, ack, client }) => {
         await ack();
-        try {
-            const { user_id: userId, team_id: workspaceId, trigger_id } = command;
 
+        const checkCommand = await checkCommandMiddleware(db, client, command);
+        if (!checkCommand) return;
+
+        const { user_id: userId, team_id: workspaceId, trigger_id } = command;
+        const loadingView = await loadingModal(client, trigger_id, 'Xin phép nghỉ');
+
+        try {
             const { blocks, fullDurationOption } = buildBlocks(defaultOptions.period, defaultOptions.duration, defaultOptions.reason);
             const metadata = JSON.stringify({
                 userId, workspaceId,
@@ -15,12 +22,12 @@ module.exports = (app) => {
                 fullDurationOption
             });
 
-            await client.views.open({
-                trigger_id,
+            await client.views.update({
+                view_id: loadingView.view.id,
                 view: buildModal(metadata, blocks)
             });
         } catch (error) {
-            console.error("Error handling leave request:", error);
+            console.error('Error handling leave request:', error);
         }
     });
 
@@ -42,7 +49,7 @@ module.exports = (app) => {
                 view: buildModal(newMetadata, blocks)
             });
         } catch (error) {
-            console.error("Error handling leave request:", error);
+            console.error('Error handling leave request:', error);
         }
     });
 
@@ -64,7 +71,7 @@ module.exports = (app) => {
                 view: buildModal(newMetadata, blocks)
             });
         } catch (error) {
-            console.error("Error handling leave request:", error);
+            console.error('Error handling leave request:', error);
         }
     });
 };

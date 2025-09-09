@@ -1,10 +1,11 @@
-const dayjs = require("dayjs");
-const ExcelJS = require("exceljs");
-const { YMD_FORMAT } = require("../../services/formatDate");
-const { attendanceExport } = require("../../services/utils");
+const dayjs = require('dayjs');
+const ExcelJS = require('exceljs');
+const { YMD_FORMAT } = require('../../services/formatDate');
+const { exportData } = require('../../services/dbCommands');
+const { today } = require('../../services/utils');
 
 module.exports = (app, db) => {
-    app.view('export_attendance_modal', async ({ ack, view, client, body }) => {
+    app.view('export_data_modal', async ({ ack, view, client, body }) => {
         await ack();
         try {
             const requesterId = body.user.id;
@@ -17,52 +18,62 @@ module.exports = (app, db) => {
             const month = parseInt(view.state.values.month_block.month_select.selected_option.value);
             const year = parseInt(view.state.values.year_block.year_select.selected_option.value);
 
+            const monthName = dayjs(`${year}-${month}-01`).format('MMMM');
+
+            const workbook = new ExcelJS.Workbook();
+            const worksheet = workbook.addWorksheet(`Tháng ${month}-${year}`);
+
+            worksheet.mergeCells('A1', 'B1');
+            worksheet.getCell('A1').value = `Tháng ${month}/${year}`;
+            worksheet.getCell('A1').font = { size: 14 };
+
+            worksheet.mergeCells('A2', 'B2');
+            worksheet.getCell('A2').value = `Thời gian làm việc:`;
+            worksheet.getCell('A2').font = { size: 14 };
+
+            worksheet.getColumn('A').width = 20;
+            worksheet.getColumn('B').width = 20;
+
+            let weekDaysRow = [null, null, 'SUM'];
+            let datesRow = ['ID', 'Họ và tên', null];
+
+            const totalDays = dayjs(`${year}-${month}-01`).daysInMonth();
+            const workDays = [];
+
+            for (let day = 1; day <= totalDays; day++) {
+                const date = dayjs(`${year}-${month}-${String(day).padStart(2, '0')}`);
+                const dayOfWeek = date.day();
+
+                if (dayOfWeek !== 0 && dayOfWeek !== 6) {
+                    workDays.push(day);
+                }
+
+                weekDaysRow.push(date.format('ddd'));
+                datesRow.push(day);
+            }
+
+            weekDaysRow.push(
+                'Ngày phép dùng trong tháng',
+                'Tổng ngày nghỉ trong tháng',
+                'Tổng ngày công tính lương',
+                'Ngày phép còn dư đầu tháng',
+                'Tổng ngày phép còn lại'
+            );
+
+            worksheet.addRow([]);
+            worksheet.addRow(weekDaysRow).font = { bold: true };
+            worksheet.addRow(datesRow).font = { bold: true };
+
             for (const user of userList) {
                 const userId = user.value;
                 const username = user.text.text;
-
-                const workbook = new ExcelJS.Workbook();
-                const worksheet = workbook.addWorksheet(`Tháng ${month}-${year}`);
-
-                worksheet.mergeCells('A1', 'B1');
-                worksheet.getCell('A1').value = `Tháng ${month}/${year}`;
-                worksheet.getCell('A1').font = { size: 14 };
-
-                worksheet.mergeCells('A2', 'B2');
-                worksheet.getCell('A2').value = `Thời gian làm việc:`;
-                worksheet.getCell('A2').font = { size: 14 };
-
-                let weekDaysRow = [null, null, 'SUM'];
-                let datesRow = ['ID', 'Họ và tên', null];
-
-                const today = dayjs();
-                const totalDays = dayjs(`${year}-${month}-01`).daysInMonth();
-                const workDays = [];
-
-                for (let day = 1; day <= totalDays; day++) {
-                    const date = dayjs(`${year}-${month}-${String(day).padStart(2, '0')}`);
-                    const dayOfWeek = date.day();
-
-                    if (dayOfWeek !== 0 && dayOfWeek !== 6) {
-                        workDays.push(day);
-                    }
-
-                    weekDaysRow.push(date.format('ddd'));
-                    datesRow.push(day);
-                }
-
-                weekDaysRow.push('Ngày phép dùng trong tháng', 'Tổng ngày nghỉ trong tháng', 'Tổng ngày công tính lương', 'Ngày phép còn dư đầu tháng', 'Tổng ngày phép còn lại');
-
-                worksheet.addRow([]);
-                worksheet.addRow(weekDaysRow).font = { bold: true };
-                worksheet.addRow(datesRow).font = { bold: true };
 
                 let detailRow = [userId, username, null];
                 let totalWorkHours = 0;
                 let totalLeaveHours = 0;
                 let totalWorkDays = 0;
 
-                const attendanceData = await attendanceExport(db, workspaceId, userId, month, year);
+                const attendanceData = await exportData(db, workspaceId, userId, month, year);
 
                 for (let day = 1; day <= totalDays; day++) {
                     const current = dayjs(`${year}-${month}-${String(day).padStart(2, '0')}`);
@@ -106,19 +117,17 @@ module.exports = (app, db) => {
                         cell.font = { name: 'Times New Roman', size: 10 };
                     })
                 });
-                // Xuất file dữ liệu
-                const buffer = await workbook.xlsx.writeBuffer();
-
-                await client.files.uploadV2({
-                    channel_id: dmChannelId,
-                    file: buffer,
-                    filename: `${username}-${userId}'s attendance.xlsx`,
-                    title: `Thống kê của ${username}`,
-                });
-                worksheet.spliceRows(3, worksheet.rowCount - 1);
             }
+            // Xuất file dữ liệu
+            const buffer = await workbook.xlsx.writeBuffer();
+            await client.files.uploadV2({
+                channel_id: dmChannelId,
+                file: buffer,
+                filename: `Attendance data for ${monthName} ${year}.xlsx`,
+                title: `Thống kê làm việc tháng ${month}`,
+            });
         } catch (error) {
-            console.error("Error handling export attendance:", error);
+            console.error('Error handling export attendance: ', error);
         }
     });
 };

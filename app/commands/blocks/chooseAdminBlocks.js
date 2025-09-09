@@ -26,7 +26,7 @@ const userBlock = (options) => ({
 
 const buildModal = (channelOptions, defaultChannel, userOptions, requesterID) => ({
     type: 'modal',
-    callback_id: 'choose_administrator_modal',
+    callback_id: 'choose_admin_modal',
     private_metadata: JSON.stringify({ channelOptions, userOptions, requesterID }),
     title: { type: 'plain_text', text: 'Chọn thông tin quản trị' },
     submit: { type: 'plain_text', text: 'Xác nhận' },
@@ -37,6 +37,4 @@ const buildModal = (channelOptions, defaultChannel, userOptions, requesterID) =>
     ]
 });
 
-module.exports = {
-    buildModal
-}
+module.exports = { buildModal }
