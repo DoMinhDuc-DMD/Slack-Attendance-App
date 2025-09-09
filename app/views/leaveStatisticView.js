@@ -1,7 +1,6 @@
 const dayjs = require("dayjs");
-const { leaveStatistic } = require("../../services/leaveStatistic");
 const { DM_FORMAT } = require("../../services/formatDate");
-const { formatDuration, formatPeriod, responseMessage } = require("../../services/utils");
+const { formatDuration, formatPeriod, responseMessage, getLeaveStatistic } = require("../../services/utils");
 
 module.exports = (app, db) => {
     app.view('leave_statistic_modal', async ({ ack, view, client, body }) => {
@@ -16,7 +15,7 @@ module.exports = (app, db) => {
 
         for (const user of userList) {
             const userId = user.value;
-            const stats = await leaveStatistic(db, workspaceId, userId, month, year);
+            const [stats] = await getLeaveStatistic(db, workspaceId, userId, month, year);
 
             let message = '';
 
@@ -29,7 +28,7 @@ module.exports = (app, db) => {
                 const details = stats.map(l => {
                     totalLeaveTime += l.leave_duration;
                     if (l.leave_period === 'full_day') totalLeaveDays++;
-                    return `\t- ${dayjs(l.leave_day).format(DM_FORMAT)}: ${formatPeriod(l.leave_period)} (${formatDuration(l.leave_duration)})`;
+                    return `\t- ${dayjs(l.leave_day).format(DM_FORMAT)}: ${formatPeriod(l.leave_period)} (${formatDuration(l.leave_duration)}). Lý do: ${l.leave_reason}`;
                 }).join('\n');
 
                 message =
@@ -38,9 +37,7 @@ module.exports = (app, db) => {
                     `\t- Tổng thời gian nghỉ: *${formatDuration(totalLeaveTime)}*\n` +
                     `* *Chi tiết:*\n${details}`;
             }
-
-            await responseMessage(client, requesterId, message)
+            await responseMessage(client, requesterId, message);
         }
     });
-
 }
