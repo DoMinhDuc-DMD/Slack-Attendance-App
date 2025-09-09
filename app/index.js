@@ -35,7 +35,7 @@ const app = new App({
 (async () => {
     try {
         const db = await DBConnection();
-
+        
         registerCommands(app, db);
         registerEvents(app, db);
         registerMessages(app, db);

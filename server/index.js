@@ -4,11 +4,11 @@ const { DBConnection } = require('../services/DBConnection')
 require('dotenv').config();
 
 const app = express();
-
+// 'https://b19b4865a0fe.ngrok-free.app/slack/oauth_redirect'
 (async () => {
-    const res = await axios.get('http://ngrok:4040/api/tunnels')
-    const redirectUri = res.data.tunnels[0].public_url + '/slack/oauth_redirect';
-    console.log("Ngrok URL:", redirectUri);
+    // const res = await axios.get('http://ngrok:4040/api/tunnels')
+    // const redirectUri = res.data.tunnels[0].public_url + '/slack/oauth_redirect';
+    // console.log("Ngrok URL:", redirectUri);
 
     app.get('/slack/oauth_redirect', async (req, res) => {
         const code = req.query.code;
@@ -20,7 +20,7 @@ const app = express();
                     code,
                     client_id: process.env.CLIENT_ID,
                     client_secret: process.env.CLIENT_SECRET,
-                    redirect_uri: redirectUri
+                    redirect_uri: 'https://6c10883ef373.ngrok-free.app/slack/oauth_redirect'
                 }
             });
 
