@@ -1,23 +1,11 @@
-const dayjs = require("dayjs");
-const { YMD_FORMAT } = require("../../../services/formatDate");
-const { periodMapOptions, durationMapOptions, reasonMapOptions, formatOptions } = require("../../../services/utils");
-
-const periodOptions = formatOptions(periodMapOptions, 'leavePeriod');
-const durationOptions = formatOptions(durationMapOptions, 'leaveDuration');
-const reasonOptions = formatOptions(reasonMapOptions, 'leaveReason');
+const { YMD_FORMAT } = require('../../../services/formatDate');
+const { periodOptions, durationOptions, reasonOptions, getPeriodInfo } = require('../../../services/modalOptions');
+const { today } = require('../../../services/utils');
 
 const defaultOptions = {
     period: periodOptions[0],
     duration: durationOptions[1],
     reason: reasonOptions[0]
-};
-
-const getPeriodInfo = (periodValue) => {
-    const period = Object.values(periodMapOptions).find(p => p.leavePeriod === periodValue);
-    return {
-        isFull: periodValue.includes('full'),
-        fullDurationOption: period ? period.leaveDuration : ""
-    };
 };
 
 const datePickerBlock = {
@@ -27,8 +15,7 @@ const datePickerBlock = {
     element: {
         type: 'datepicker',
         action_id: 'new_datepicker_input',
-        placeholder: { type: 'plain_text', text: 'Chọn ngày xin nghỉ' },
-        initial_date: dayjs().format(YMD_FORMAT)
+        initial_date: today.format(YMD_FORMAT)
     }
 };
 
@@ -40,27 +27,21 @@ const periodBlock = (options, initialOption) => ({
     element: {
         type: 'static_select',
         action_id: 'new_period_input',
-        placeholder: { type: 'plain_text', text: 'Chọn buổi nghỉ' },
         options,
         initial_option: initialOption
     },
 });
 
-const durationBlock = (isFull, fullOption, options, initialOption) => ({
+const durationBlock = (options, initialOption) => ({
     type: 'input',
     block_id: 'new_duration',
     label: { type: 'plain_text', text: 'Thời gian nghỉ' },
-    element: isFull ? {
-        type: 'plain_text_input',
-        action_id: 'new_duration_input',
-        initial_value: fullOption
-    } : {
+    element: {
         type: 'static_select',
         action_id: 'new_duration_input',
-        placeholder: { type: 'plain_text', text: 'Chọn khoảng thời gian nghỉ' },
         options,
         initial_option: initialOption
-    },
+    }
 });
 
 const reasonSelectBlock = (options, initial) => ({
@@ -71,7 +52,6 @@ const reasonSelectBlock = (options, initial) => ({
     element: {
         type: 'static_select',
         action_id: 'new_reason_select_input',
-        placeholder: { type: 'plain_text', text: 'Chọn lý do nghỉ' },
         options,
         initial_option: initial
     }
@@ -84,10 +64,7 @@ const reasonInputBlock = {
     element: {
         type: 'plain_text_input',
         action_id: 'new_reason_input_input',
-        placeholder: {
-            type: "plain_text",
-            text: "Lý do khác"
-        }
+        placeholder: { type: 'plain_text', text: 'Lý do khác' }
     }
 };
 
@@ -109,9 +86,12 @@ function buildBlocks(selectedPeriod, selectedDuration, selectedReason) {
     const blocks = [
         datePickerBlock,
         periodBlock(periodOptions, selectedPeriod),
-        durationBlock(isFull, fullDurationOption, durationOptions, selectedDuration),
         reasonSelectBlock(reasonOptions, selectedReason)
     ];
+
+    if (!isFull) {
+        blocks.splice(2, 0, durationBlock(durationOptions, selectedDuration));
+    }
 
     if (selectedReason.value === 'other') {
         blocks.push(reasonInputBlock);

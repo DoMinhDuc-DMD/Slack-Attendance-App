@@ -1,6 +1,6 @@
 const express = require('express');
 const axios = require('axios');
-const { DBConnection } = require('../services/DBConnection')
+const { dbConnection } = require('../services/dbConnection')
 require('dotenv').config();
 
 const app = express();
@@ -8,7 +8,7 @@ const app = express();
 (async () => {
     const res = await axios.get('http://ngrok:4040/api/tunnels')
     const redirectUri = res.data.tunnels[0].public_url + '/slack/oauth_redirect';
-    console.log("Ngrok URL:", redirectUri);
+    console.log('Ngrok URL: ', redirectUri);
 
     app.get('/slack/oauth_redirect', async (req, res) => {
         const code = req.query.code;
@@ -33,7 +33,7 @@ const app = express();
             const botUserId = data.bot_user_id;
             const adminUserId = data.authed_user.id;
 
-            const db = await DBConnection();
+            const db = await dbConnection();
             await db.query(`
                 INSERT INTO workspace (workspace_id, workspace_name, access_token, bot_user_id, super_admin_id) VALUES (?, ?, ?, ?, ?) 
                 ON DUPLICATE KEY UPDATE 

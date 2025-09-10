@@ -2,13 +2,14 @@ const { checkCommandMiddleware, today } = require('../../services/utils');
 const { loadingModal } = require('./blocks/loadingModal');
 
 module.exports = (app, db) => {
-    app.command('/thongkenghi', async ({ command, ack, client }) => {
+    app.command('/xuatdulieu', async ({ command, ack, client }) => {
         await ack();
 
         const checkCommand = await checkCommandMiddleware(db, client, command);
         if (!checkCommand) return;
 
-        const loadingView = await loadingModal(client, command.trigger_id, 'Thống kê nghỉ');
+        const { trigger_id } = command;
+        const loadingView = await loadingModal(client, trigger_id, 'Xuất dữ liệu')
 
         try {
             const currentMonth = today.month() + 1;
@@ -28,7 +29,7 @@ module.exports = (app, db) => {
                     value: month.toString()
                 };
             });
-            const yearOptions = Array.from({ length: 5 }, (_, i) => {
+            const yearOptions = Array.from({ length: 3 }, (_, i) => {
                 const year = currentYear - i;
                 return {
                     text: { type: 'plain_text', text: `${year}` },
@@ -40,9 +41,9 @@ module.exports = (app, db) => {
                 view_id: loadingView.view.id,
                 view: {
                     type: 'modal',
-                    callback_id: 'leave_statistic_modal',
-                    title: { type: 'plain_text', text: 'Thống kê nghỉ' },
-                    submit: { type: 'plain_text', text: 'Xem' },
+                    callback_id: 'export_data_modal',
+                    title: { type: 'plain_text', text: 'Xuất dữ liệu' },
+                    submit: { type: 'plain_text', text: 'Xuất' },
                     close: { type: 'plain_text', text: 'Huỷ' },
                     blocks: [
                         {
@@ -82,7 +83,7 @@ module.exports = (app, db) => {
                 }
             });
         } catch (error) {
-            console.error('Error opening modal:', error);
+            console.error('Error handling export attendance:', error);
         }
     });
 }

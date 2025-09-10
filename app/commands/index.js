@@ -1,13 +1,13 @@
-const attendanceExportCommand = require("./attendanceExportCommand");
-const newRequestCommand = require("./newRequestCommand");
-const leaveStatisticCommand = require("./leaveStatisticCommand");
-const updateRequestCommand = require("./updateRequestCommand");
-const chooseAdministratorCommands = require("./chooseAdministratorCommands");
+const chooseAdminCommands = require('./chooseAdminCommands');
+const exportData = require('./exportDataCommand');
+const leaveStatisticCommand = require('./leaveStatisticCommand');
+const newRequestCommand = require('./newRequestCommand');
+const updateRequestCommand = require('./updateRequestCommand');
 
 module.exports = (app, db) => {
-    attendanceExportCommand(app, db);
-    chooseAdministratorCommands(app, db);
+    chooseAdminCommands(app, db);
+    exportData(app, db);
     leaveStatisticCommand(app, db);
-    newRequestCommand(app);
+    newRequestCommand(app, db);
     updateRequestCommand(app, db);
 }
