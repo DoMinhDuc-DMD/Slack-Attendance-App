@@ -1,6 +1,6 @@
 const { App } = require('@slack/bolt');
 require('dotenv').config();
-const { DBConnection } = require('../services/DBConnection');
+const { dbConnections } = require('../services/dbConnections');
 
 const registerCommands = require('./commands');
 const registerEvents = require('./events');
@@ -18,7 +18,7 @@ const app = new App({
         maxTimeout: 60000,
     },
     authorize: async ({ teamId }) => {
-        const db = await DBConnection();
+        const db = await dbConnections();
         const [rows] = await db.query('SELECT access_token, bot_user_id FROM workspace WHERE workspace_id = ?', [teamId]);
 
         if (rows.length === 0) {
@@ -34,8 +34,13 @@ const app = new App({
 
 (async () => {
     try {
+<<<<<<< HEAD
         const db = await DBConnection();
         
+=======
+        const db = await dbConnections();
+
+>>>>>>> 173b60c714a8e1a347682a14cf1260393b8dcf4d
         registerCommands(app, db);
         registerEvents(app, db);
         registerMessages(app, db);
@@ -43,6 +48,6 @@ const app = new App({
 
         await app.start();
     } catch (error) {
-        console.error("Error starting the bot:", error);
+        console.error('Error starting the bot: ', error);
     }
 })();

@@ -1,6 +1,8 @@
-const dayjs = require("dayjs");
-const { DM_FORMAT } = require("../../services/formatDate");
-const { formatDuration, formatPeriod, responseMessage, getLeaveStatistic } = require("../../services/utils");
+const dayjs = require('dayjs');
+const { DM_FORMAT } = require('../../services/formatDate');
+const { formatDuration, responseMessage } = require('../../services/utils');
+const { getLabelFromValue } = require('../../services/modalOptions');
+const { getLeaveStatistic } = require('../../services/dbQueries');
 
 module.exports = (app, db) => {
     app.view('leave_statistic_modal', async ({ ack, view, client, body }) => {
@@ -28,7 +30,8 @@ module.exports = (app, db) => {
                 const details = stats.map(l => {
                     totalLeaveTime += l.leave_duration;
                     if (l.leave_period === 'full_day') totalLeaveDays++;
-                    return `\t- ${dayjs(l.leave_day).format(DM_FORMAT)}: ${formatPeriod(l.leave_period)} (${formatDuration(l.leave_duration)}). Lý do: ${l.leave_reason}`;
+
+                    return `\t- ${dayjs(l.leave_day).format(DM_FORMAT)}: ${getLabelFromValue(l.leave_period)} (${formatDuration(l.leave_duration)}). Lý do: ${l.reason_note}`;
                 }).join('\n');
 
                 message =

@@ -20,36 +20,6 @@ CREATE TABLE attendance_channels (
     FOREIGN KEY (workspace_id) REFERENCES workspace(workspace_id) ON UPDATE CASCADE ON DELETE CASCADE
 );
 
-CREATE TABLE period_options (
-    id INT AUTO_INCREMENT PRIMARY KEY,
-    workspace_id VARCHAR(30) NOT NULL,
-    period_text VARCHAR(100) CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci NOT NULL,
-    period_value VARCHAR(30) NOT NULL,
-    created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
-    updated_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
-    FOREIGN KEY (workspace_id) REFERENCES workspace(workspace_id) ON UPDATE CASCADE ON DELETE CASCADE
-);
-
-CREATE TABLE duration_options (
-    id INT AUTO_INCREMENT PRIMARY KEY,
-    workspace_id VARCHAR(30) NOT NULL,
-    duration_text VARCHAR(100) CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci NOT NULL,
-    duration_value VARCHAR(30) NOT NULL,
-    created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
-    updated_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
-    FOREIGN KEY (workspace_id) REFERENCES workspace(workspace_id) ON UPDATE CASCADE ON DELETE CASCADE
-);
-
-CREATE TABLE reason_options (
-    id INT AUTO_INCREMENT PRIMARY KEY,
-    workspace_id VARCHAR(30) NOT NULL,
-    reason_text VARCHAR(100) CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci NOT NULL,
-    reason_value VARCHAR(30) NOT NULL,
-    created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
-    updated_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
-    FOREIGN KEY (workspace_id) REFERENCES workspace(workspace_id) ON UPDATE CASCADE ON DELETE CASCADE
-);
-
 CREATE TABLE leave_requests (
     id INT AUTO_INCREMENT PRIMARY KEY,
     workspace_id VARCHAR(30) NOT NULL,
@@ -57,10 +27,41 @@ CREATE TABLE leave_requests (
     leave_day DATE NOT NULL,
     leave_period VARCHAR(30) NOT NULL,
     leave_duration FLOAT NOT NULL,
-    leave_reason VARCHAR(100) CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci NOT NULL,
+    leave_reason VARCHAR(30) NOT NULL,
+    reason_note TEXT CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci,
     timestamp VARCHAR(30) NOT NULL,
     request_status ENUM('pending', 'confirmed', 'disabled') NOT NULL DEFAULT 'pending',
     created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
     updated_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
     FOREIGN KEY (workspace_id) REFERENCES workspace(workspace_id) ON UPDATE CASCADE ON DELETE CASCADE
 );
+
+-- CREATE TABLE period_options (
+--     id INT AUTO_INCREMENT PRIMARY KEY,
+--     workspace_id VARCHAR(30) NOT NULL,
+--     period_text VARCHAR(100) CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci NOT NULL,
+--     period_value VARCHAR(30) NOT NULL,
+--     created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+--     updated_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+--     FOREIGN KEY (workspace_id) REFERENCES workspace(workspace_id) ON UPDATE CASCADE ON DELETE CASCADE
+-- );
+
+-- CREATE TABLE duration_options (
+--     id INT AUTO_INCREMENT PRIMARY KEY,
+--     workspace_id VARCHAR(30) NOT NULL,
+--     duration_text VARCHAR(100) CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci NOT NULL,
+--     duration_value VARCHAR(30) NOT NULL,
+--     created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+--     updated_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+--     FOREIGN KEY (workspace_id) REFERENCES workspace(workspace_id) ON UPDATE CASCADE ON DELETE CASCADE
+-- );
+
+-- CREATE TABLE reason_options (
+--     id INT AUTO_INCREMENT PRIMARY KEY,
+--     workspace_id VARCHAR(30) NOT NULL,
+--     reason_text VARCHAR(100) CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci NOT NULL,
+--     reason_value VARCHAR(30) NOT NULL,
+--     created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+--     updated_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+--     FOREIGN KEY (workspace_id) REFERENCES workspace(workspace_id) ON UPDATE CASCADE ON DELETE CASCADE
+-- );

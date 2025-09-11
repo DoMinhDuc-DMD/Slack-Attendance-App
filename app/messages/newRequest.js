@@ -1,6 +1,8 @@
-const dayjs = require("dayjs");
-const { YMD_FORMAT, DATETIME_FORMAT, DMY_FORMAT } = require("../../services/formatDate");
-const { insertLeaveRequest, capitalizeFirstLetter, calculateDuration, periodMapOptions, checkExistRequest, responseMessage, getInfoToRequest } = require("../../services/utils");
+const dayjs = require('dayjs');
+const { YMD_FORMAT, DATETIME_FORMAT, DMY_FORMAT } = require('../../services/formatDate');
+const { capitalizeFirstLetter, calculateDuration, responseMessage, today } = require('../../services/utils');
+const { periodMapOptions } = require('../../services/modalOptions');
+const { getInfoToRequest, checkExistRequest, insertLeaveRequest } = require('../../services/dbQueries');
 
 module.exports = (app, db) => {
     app.message(async ({ message, client }) => {
@@ -14,7 +16,7 @@ module.exports = (app, db) => {
             if (!match) return;
 
             const workspaceId = message.team;
-            const leaveDay = dayjs().format(YMD_FORMAT);
+            const leaveDay = today.format(YMD_FORMAT);
             const threadTs = message.ts || message.thread_ts;
             const receiveTime = dayjs(parseFloat(message.ts) * 1000).format(DATETIME_FORMAT);
 
@@ -40,18 +42,21 @@ module.exports = (app, db) => {
                 durationValue = calculateDuration(newDuration);
             }
 
+            const leaveReason = { text: 'Cá nhân', value: 'personal' };
+
             const [checkExist] = await checkExistRequest(db, workspaceId, message.user, leaveDay, periodValue);
             if (checkExist.length > 0) {
                 return await responseMessage(
                     client,
                     message.user,
-                    `Đã có yêu cầu nghỉ ${period.split(" ").slice(-2).join(" ")} ${dayjs(leaveDay).format(DMY_FORMAT)} rồi. Hãy cập nhật lại yêu cầu!`
+                    `Đã có yêu cầu nghỉ ${period.split(' ').slice(-2).join(' ')} ${dayjs(leaveDay).format(DMY_FORMAT)} rồi. Hãy cập nhật lại yêu cầu!`,
+                    { autoDelete: true }
                 );
             }
 
-            await insertLeaveRequest(db, workspaceId, message.user, leaveDay, periodValue, durationValue, threadTs, receiveTime);
+            await insertLeaveRequest(db, workspaceId, message.user, leaveDay, periodValue, durationValue, leaveReason.value, leaveReason.text, threadTs, receiveTime);
         } catch (error) {
-            console.error("Error handling leave request:", error);
+            console.error('Error handling leave request: ', error);
         }
     });
 }
