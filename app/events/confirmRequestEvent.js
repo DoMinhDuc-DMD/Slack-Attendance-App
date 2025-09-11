@@ -1,4 +1,4 @@
-const { confirmLeaveRequest, disableLeaveRequest, getInfoToRequest } = require('../../services/dbCommands');
+const { confirmLeaveRequest, disableLeaveRequest, getInfoToRequest } = require('../../services/dbQueries');
 const { DATETIME_FORMAT } = require('../../services/formatDate');
 const { today } = require('../../services/utils');
 

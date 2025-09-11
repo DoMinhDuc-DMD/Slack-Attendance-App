@@ -1,7 +1,7 @@
 const dayjs = require('dayjs');
 const ExcelJS = require('exceljs');
 const { YMD_FORMAT } = require('../../services/formatDate');
-const { exportData } = require('../../services/dbCommands');
+const { exportData } = require('../../services/dbQueries');
 const { today } = require('../../services/utils');
 
 module.exports = (app, db) => {

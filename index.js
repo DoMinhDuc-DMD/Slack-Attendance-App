@@ -1,2 +1,5 @@
+// Local only
 require('./app');
-require('./server');
+
+// Deploy app
+// require('./server');

@@ -2,7 +2,7 @@ const dayjs = require('dayjs');
 const { YMD_FORMAT, DATETIME_FORMAT, DMY_FORMAT } = require('../../services/formatDate');
 const { capitalizeFirstLetter, calculateDuration, responseMessage, today } = require('../../services/utils');
 const { periodMapOptions } = require('../../services/modalOptions');
-const { getInfoToRequest, checkExistRequest, insertLeaveRequest } = require('../../services/dbCommands');
+const { getInfoToRequest, checkExistRequest, insertLeaveRequest } = require('../../services/dbQueries');
 
 module.exports = (app, db) => {
     app.message(async ({ message, client }) => {
