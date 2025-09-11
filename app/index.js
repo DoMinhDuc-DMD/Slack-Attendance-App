@@ -34,13 +34,8 @@ const app = new App({
 
 (async () => {
     try {
-<<<<<<< HEAD
-        const db = await DBConnection();
-        
-=======
         const db = await dbConnections();
 
->>>>>>> 173b60c714a8e1a347682a14cf1260393b8dcf4d
         registerCommands(app, db);
         registerEvents(app, db);
         registerMessages(app, db);

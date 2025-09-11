@@ -2,13 +2,13 @@ const mysql = require('mysql2/promise');
 
 let pool;
 
-async function dbConnections() {
+function dbConnections() {
     if (!pool) {
         pool = mysql.createPool({
             // Local
-            host: process.env.DB_HOST || 'localhost',
+            host: process.env.DB_HOST || '127.0.0.1',
             port: process.env.DB_PORT || 3308,
-            user: process.env.DB_USER || 'root',
+            user: process.env.DB_USER || 'slack',
             // Server
             // host: process.env.DB_HOST || 'db',
             // port: process.env.DB_PORT || 3306,
