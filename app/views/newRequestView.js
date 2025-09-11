@@ -4,6 +4,9 @@ const { responseMessage, calculateDuration, today } = require('../../services/ut
 const { getLabelFromValue } = require('../../services/modalOptions');
 const { checkExistRequest, insertLeaveRequest, getInfoToRequest } = require('../../services/dbQueries');
 
+// Import Horilla api client
+const horillaApi = require('../../services/horillaApiClient');
+
 module.exports = (app, db) => {
     app.view('new_request_modal', async ({ ack, view, client }) => {
         await ack();
@@ -54,6 +57,41 @@ module.exports = (app, db) => {
             );
 
             await insertLeaveRequest(db, workspaceId, userId, newDay, newPeriod, durationValue, newReason, newReasonNote, request.ts, pendingTime);
+
+            // Send to horilla api
+            if(process.env.HORILLA_INTEGRATION_ENABLED === 'true') {
+                console.log("hihihi")
+                try {
+                    const result = await horillaApi.createLeaveRequest(
+                        userId,
+                        workspaceId,
+                        newDay,
+                        newPeriod,
+                        durationValue,
+                        newReason,
+                        newReasonNote,
+                        request.ts,
+                    )
+
+                    if(result.success) {
+                        await responseMessage(
+                            client, channelId,
+                            `Yêu cầu nghỉ đã được gửi đến Horilla.`
+                        );
+                    } else {
+                        await responseMessage(
+                            client, channelId,
+                            `Failed to sync to Horilla, error: ${result.error}`
+                        );
+                    }
+                } catch (error) {
+                    await responseMessage(
+                        client,
+                        userId,
+                        `Yêu cầu nghỉ đã được lưu trong Slack nhưng không thể kết nối với hệ thống Horilla`
+                    );
+                }
+            }    
         } catch (error) {
             console.error('Error handling leave request modal submission: ', error);
         }

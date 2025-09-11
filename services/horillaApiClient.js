@@ -1,3 +1,5 @@
+const axios = require('axios');
+
 class HorillaApiClient {
   constructor() {
     this.baseUrl = process.env.HORILLA_API_URL
@@ -43,6 +45,8 @@ class HorillaApiClient {
     leaveDate,
     leavePeriod,
     leaveDuration,
+    leaveReason,
+    reasonNote,
     timestamp,
     description = "Leave request from Slack"
   ) {
@@ -53,8 +57,9 @@ class HorillaApiClient {
         leave_date: leaveDate,
         leave_period: leavePeriod,
         leave_duration: leaveDuration,
+        leave_reason: leaveReason,
+        reason_note: reasonNote,
         timestamp: timestamp,
-        description: description,
       }
 
       const response = await this.client.post("/leave/api/slack/create-leave-request/", payload)
