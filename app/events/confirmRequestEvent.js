@@ -2,6 +2,8 @@ const { confirmLeaveRequest, disableLeaveRequest, getInfoToRequest } = require('
 const { DATETIME_FORMAT } = require('../../services/formatDate');
 const { today } = require('../../services/utils');
 
+const horillaApi = require('../../services/horillaApiClient');
+
 module.exports = (app, db) => {
     app.event('reaction_added', async ({ event, body }) => {
         try {
@@ -23,6 +25,26 @@ module.exports = (app, db) => {
 
                 await confirmLeaveRequest(db, workspaceId, confirmTime, req.user_id, req.timestamp);
                 await disableLeaveRequest(db, workspaceId, confirmTime, req.user_id, req.leave_day, period, req.timestamp);
+
+                // Sync to Horilla
+                if(process.env.HORILLA_INTEGRATION_ENABLED === 'true') {
+                    try {
+                        const result = await horillaApi.updateLeaveRequestStatus(
+                          req.user_id,
+                          workspaceId,
+                          req.timestamp,
+                          "confirmed"
+                        )
+
+                        if(result.success) {
+                            console.log("Sync to Horilla success")
+                        } else {
+                            console.log("Sync to Horilla failed", result.error)
+                        }
+                    } catch (error) {
+                        console.error('Error syncing to Horilla: ', error)
+                    }
+                }
             }
         } catch (error) {
             console.error('Error handling confirm request: ', error);

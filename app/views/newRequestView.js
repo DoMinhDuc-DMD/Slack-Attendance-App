@@ -60,7 +60,6 @@ module.exports = (app, db) => {
 
             // Send to horilla api
             if(process.env.HORILLA_INTEGRATION_ENABLED === 'true') {
-                console.log("hihihi")
                 try {
                     const result = await horillaApi.createLeaveRequest(
                         userId,

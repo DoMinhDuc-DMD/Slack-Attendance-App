@@ -80,6 +80,7 @@ class HorillaApiClient {
   // Update leave request status
   async updateLeaveRequestStatus(slackUserId, slackTeamId, slackTimestamp, newStatus) {
     try {
+      console.log(slackUserId, slackTeamId, slackTimestamp, newStatus)
       const response = await this.client.post("/leave/api/slack/update-leave-request/", {
         slack_user_id: slackUserId,
         slack_team_id: slackTeamId,
