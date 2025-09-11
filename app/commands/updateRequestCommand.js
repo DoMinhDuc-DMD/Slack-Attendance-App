@@ -1,6 +1,7 @@
 const { checkCommandMiddleware, responseMessage } = require('../../services/utils');
 const { loadingModal } = require('./blocks/loadingModal');
-const { getRequestOptions, getPeriodOptions, buildModal, buildBlocks } = require('./blocks/updateRequestBlocks');
+const { buildModal, buildBlocks } = require('./blocks/updateRequestBlocks');
+const { getRequestOptions, getPeriodOptions } = require('../../services/modalOptions');
 
 module.exports = (app, db) => {
     app.command('/capnhatnghi', async ({ command, ack, client }) => {

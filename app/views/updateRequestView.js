@@ -1,6 +1,6 @@
 const dayjs = require('dayjs');
 const { responseMessage, today, calculateDuration } = require('../../services/utils');
-const { getInfoToRequest, insertLeaveRequest } = require('../../services/dbCommands');
+const { getInfoToRequest, insertLeaveRequest } = require('../../services/dbQueries');
 const { periodMapOptions, getLabelFromValue } = require('../../services/modalOptions');
 const { DATETIME_FORMAT, YMD_FORMAT, DMY_FORMAT } = require('../../services/formatDate');
 

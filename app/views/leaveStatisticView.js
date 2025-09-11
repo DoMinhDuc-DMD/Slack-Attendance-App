@@ -2,7 +2,7 @@ const dayjs = require('dayjs');
 const { DM_FORMAT } = require('../../services/formatDate');
 const { formatDuration, responseMessage } = require('../../services/utils');
 const { getLabelFromValue } = require('../../services/modalOptions');
-const { getLeaveStatistic } = require('../../services/dbCommands');
+const { getLeaveStatistic } = require('../../services/dbQueries');
 
 module.exports = (app, db) => {
     app.view('leave_statistic_modal', async ({ ack, view, client, body }) => {

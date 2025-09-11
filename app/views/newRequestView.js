@@ -2,7 +2,7 @@ const dayjs = require('dayjs');
 const { DMY_FORMAT, DATETIME_FORMAT, YMD_FORMAT } = require('../../services/formatDate');
 const { responseMessage, calculateDuration, today } = require('../../services/utils');
 const { getLabelFromValue } = require('../../services/modalOptions');
-const { checkExistRequest, insertLeaveRequest, getInfoToRequest } = require('../../services/dbCommands');
+const { checkExistRequest, insertLeaveRequest, getInfoToRequest } = require('../../services/dbQueries');
 
 module.exports = (app, db) => {
     app.view('new_request_modal', async ({ ack, view, client }) => {

@@ -1,3 +1,7 @@
+const dayjs = require("dayjs");
+const { YMD_FORMAT, DMY_FORMAT } = require("./formatDate");
+const { today } = require("./utils");
+
 const periodMapOptions = {
     'Đầu buổi sáng': { leavePeriod: 'start_morning' },
     'Cuối buổi sáng': { leavePeriod: 'end_morning' },
@@ -45,4 +49,43 @@ function getLabelFromValue(val) {
     return Object.entries(periodMapOptions).find(([label, value]) => value.leavePeriod === val)?.[0] || null;
 }
 
-module.exports = { periodMapOptions, durationMapOptions, reasonMapOptions, periodOptions, durationOptions, reasonOptions, getPeriodInfo, getLabelFromValue }
+// Update functions
+const getRequestOptions = async (db, workspaceId, userId) => {
+    const [requestList] = await db.execute(
+        `SELECT * FROM leave_requests 
+        WHERE workspace_id = ? AND user_id = ? AND leave_day >= ? AND request_status != ?`,
+        [workspaceId, userId, today.format(YMD_FORMAT), 'disabled']
+    );
+
+    const requestListFormat = requestList.map(req => ({
+        label: `${getLabelFromValue(req.leave_period)} ${dayjs(req.leave_day).format(DMY_FORMAT)}`,
+        value: `${getLabelFromValue(req.leave_period)} ${dayjs(req.leave_day).format(DMY_FORMAT)}`
+    }));
+    return requestListFormat.map(req => ({
+        text: { type: 'plain_text', text: req.label },
+        value: req.value
+    }));
+};
+
+const getPeriodOptions = (selectedRequest) => {
+    const periodRequest = selectedRequest.value.split(' ').slice(0, -1).join(' ');
+    const { leavePeriod } = periodMapOptions[periodRequest];
+
+    const periodPart = leavePeriod.split('_')[1];
+    const updatePeriodOptions = periodOptions.filter(p => p.value.includes(periodPart) || p.value.includes('day'));
+
+    return { periodPart, updatePeriodOptions };
+}
+
+module.exports = {
+    periodMapOptions,
+    durationMapOptions,
+    reasonMapOptions,
+    periodOptions,
+    durationOptions,
+    reasonOptions,
+    getPeriodInfo,
+    getLabelFromValue,
+    getRequestOptions,
+    getPeriodOptions
+}

@@ -1,6 +1,6 @@
 const express = require('express');
 const axios = require('axios');
-const { dbConnection } = require('../services/dbConnection')
+const { dbConnections } = require('../services/dbConnections')
 require('dotenv').config();
 
 const app = express();
@@ -33,7 +33,7 @@ const app = express();
             const botUserId = data.bot_user_id;
             const adminUserId = data.authed_user.id;
 
-            const db = await dbConnection();
+            const db = await dbConnections();
             await db.query(`
                 INSERT INTO workspace (workspace_id, workspace_name, access_token, bot_user_id, super_admin_id) VALUES (?, ?, ?, ?, ?) 
                 ON DUPLICATE KEY UPDATE 
